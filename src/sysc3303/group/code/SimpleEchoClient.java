@@ -417,18 +417,8 @@ public class SimpleEchoClient {
 	 	      // Form a String from the byte array.
 	 	      received = new String(receivePacket.getData());   
 	 	      System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form:" + receivePacket.getData()[0] + receivePacket.getData()[1] + "\n");
-	 	    	 
-	 	     
-	 	     //Writing file to local disk
-	 	     try {
-	 	    	System.out.println("Writing file to local disk...\n");
-	 			OutputStream outStream = new FileOutputStream(filename);
-	 			output.writeTo(outStream);
-	 	     } catch (IOException e) {
-	 			e.printStackTrace();
-	 	     }
 	 	      
-	 	     count = count+packetSize;
+	 	      count = count+packetSize;
 	      }
    }
 
