@@ -152,6 +152,15 @@ public class SimpleEchoClient {
 	   receivePacket = new DatagramPacket(data, data.length);  
 	   boolean lastPacket = false;
 	   
+	   File newReadFile = new File(filename);
+	   FileOutputStream receivedFile = null;
+	   try {
+		   receivedFile = new FileOutputStream(newReadFile);
+	   } catch (FileNotFoundException e1) {
+		   // TODO Auto-generated catch block
+		   e1.printStackTrace();
+	   }
+	   
 	   while (!lastPacket) {
 	    	  try {
 	 	         // Block until a datagram is received via sendReceiveSocket.  
@@ -177,15 +186,27 @@ public class SimpleEchoClient {
 	 	      received = new String(receivePacket.getData());   
 	 	      System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form:" + receivePacket.getData()[0] + receivePacket.getData()[1] + "\n");
 	 	      
-	 	      ByteArrayOutputStream output = new ByteArrayOutputStream();
+	 	      //ByteArrayOutputStream output = new ByteArrayOutputStream();
 	 	      
 	 	      //Check what type of response was received
 	 	      //DATA
 	 	      if (receivePacket.getData()[1] == 3) {
+	 	    	 if (!newReadFile.exists()) {
+	                    try {
+							newReadFile.createNewFile();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+	 	    	 }
+	            	
+	 	    	 
 	 	    	  byte[] blockNumber = {receivePacket.getData()[2], receivePacket.getData()[3]};
-	 	    	  DataOutputStream outStream = new DataOutputStream(output);
+	 	    	  //DataOutputStream outStream = new DataOutputStream(output);
 	 	    	  try {
-	 	    		  outStream.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
+	 	    		  //Writing to local disk
+	 	    		 System.out.println("Writing file to local disk...\n");
+	 	    		  receivedFile.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
 	 	    	  } catch (IOException e) {
 	 	    		  // TODO Auto-generated catch block
 	 	    		  e.printStackTrace();
@@ -227,6 +248,7 @@ public class SimpleEchoClient {
 	 	    	  
 	 	      }
 	 	     
+	 	      /*
 	 	     //Writing file to local disk
 	 	     try {
 	 	    	System.out.println("Writing file to local disk...\n");
@@ -235,6 +257,7 @@ public class SimpleEchoClient {
 	 	     } catch (IOException e) {
 	 			e.printStackTrace();
 	 	     }
+	 	     */
 	 	      
 	      
 	      }
