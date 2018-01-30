@@ -186,7 +186,7 @@ public class ClientConnection implements Runnable {
 		      }
 
 		      // If block size is under 516 it is the last block of data to receive
-		      len = receivePacket.getLength();
+		      int len = receivePacket.getLength();
 	 	      if (len < 516){
 	 	    	  	lastPacket = true;
 	 	      }

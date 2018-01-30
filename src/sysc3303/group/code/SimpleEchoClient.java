@@ -36,13 +36,44 @@ public class SimpleEchoClient {
    }
 
    public void sendAndReceive(){
-	   //Send read request and receive response
-	   String filename = "testRead.txt";
-	   //sendReadRequest(filename);
+	   //Read input from terminal for read or write request
+	   Scanner readUserInput = new Scanner(System.in);
+	   System.out.println("Would you like to send a read request or write request this client (R/W)? ");
+	   String requestAnswer = readUserInput.next(); // Scans the next token of the input as an int.
+	   //readUserInput.close();
 	   
-	   //Send write request and receive response
-	   filename = "testWrite.txt";
-	   sendWriteRequest(filename);
+	   String filename;
+	   
+	   //Wait for answer from user for read or write request
+	   if (requestAnswer.equals("R") || requestAnswer.equals("r")){
+		   //Wait for filename
+		   Scanner readFileInput = new Scanner(System.in);
+		   System.out.println("What is the name of the file you would like to read? ");
+		   String requestFileName = readFileInput.next(); // Scans the next token of the input as an int.
+		   readFileInput.close();
+		   
+		   if (requestFileName != null){
+			   System.out.println("Sending read request...");
+			   
+			   //Send read request and receive response
+			   filename = requestFileName;
+			   sendReadRequest(filename); 
+		   }
+		   
+	   } else if (requestAnswer.equals("W") || requestAnswer.equals("w")){ 
+		 //Wait for filename
+		   Scanner readFileInput = new Scanner(System.in);
+		   System.out.println("What is the name of the file you would like to write? ");
+		   String requestFileName = readFileInput.next(); // Scans the next token of the input as an int.
+		   readFileInput.close();
+		   
+		   System.out.println("Sending write request...");
+		   
+		   //Send write request and receive response
+		   filename = requestFileName;
+		   sendWriteRequest(filename);
+	   }
+	   
 	      
 	   //Read input from terminal
 	   Scanner readInput = new Scanner(System.in);
