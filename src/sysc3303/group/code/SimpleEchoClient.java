@@ -38,7 +38,7 @@ public class SimpleEchoClient {
    public void sendAndReceive(){
 	   //Send read request and receive response
 	   String filename = "testRead.txt";
-	   sendReadRequest(filename);
+	   //sendReadRequest(filename);
 	   
 	   //Send write request and receive response
 	   filename = "testWrite.txt";
@@ -73,7 +73,6 @@ public class SimpleEchoClient {
 		   // TODO Auto-generated catch block
 		   e.printStackTrace();
 	   }
-	   
 	   
 	   byte msg[] = output.toByteArray();
 	   return msg;
@@ -178,7 +177,7 @@ public class SimpleEchoClient {
 	 	      System.out.println("Server port: " + receivePacket.getPort());
 	 	      len = receivePacket.getLength();
 	 	      if (len < 516){
-	 	    	  lastPacket = true;
+	 	    	  	lastPacket = true;
 	 	      }
 	 	      System.out.println("Length: " + len);
 	 	      System.out.print("Containing: \n");
@@ -186,22 +185,23 @@ public class SimpleEchoClient {
 	 	      received = new String(receivePacket.getData());   
 	 	      System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form:" + receivePacket.getData()[0] + receivePacket.getData()[1] + "\n");
 	 	      
-	 	      //ByteArrayOutputStream output = new ByteArrayOutputStream();
+	 	      ByteArrayOutputStream output = new ByteArrayOutputStream();
 	 	      
 	 	      //Check what type of response was received
 	 	      //DATA
 	 	      if (receivePacket.getData()[1] == 3) {
-	 	    	 if (!newReadFile.exists()) {
-	                    try {
-							newReadFile.createNewFile();
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-	 	    	 }
-	            	
-	 	    	 
+	 	    	  
+		 	    	 if (!newReadFile.exists()) {
+		                    try {
+								newReadFile.createNewFile();
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+		 	    	 }
 	 	    	  byte[] blockNumber = {receivePacket.getData()[2], receivePacket.getData()[3]};
+	 	    	  
+	 	    	  
 	 	    	  //DataOutputStream outStream = new DataOutputStream(output);
 	 	    	  try {
 	 	    		  //Writing to local disk
@@ -215,10 +215,10 @@ public class SimpleEchoClient {
 	 	    	  //Create and send ACK request of DATA received
 	 	    	  msg = createAckRequest(zero,ACK,blockNumber[0],blockNumber[1]);
 	 		      
-	 		      message = new String(msg); 
-	 		      System.out.println("Client: sending a packet containing:\n" + "Byte Form: " + msg + "\n" + "String Form: " + message + "\n");
+	 		  message = new String(msg); 
+	 		  System.out.println("Client: sending a packet containing:\n" + "Byte Form: " + msg + "\n" + "String Form: " + message + "\n");
 	 		      
-	 		      try {
+	 		  try {
 	 		         sendPacket = new DatagramPacket(msg, msg.length,
 	 		                                         InetAddress.getLocalHost(), 2323);
 	 		      } catch (UnknownHostException e) {
@@ -235,7 +235,7 @@ public class SimpleEchoClient {
 	 		      received = new String(sendPacket.getData()); 
 	 		      System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + received + "\n");
 	 		      
-	 		      //-----------SENDING REQUEST----------------
+	 		      //-----------SENDING ACK REQUEST----------------
 	 		      // Send the datagram packet to the server via the send/receive socket. 
 	 		      try {
 	 		         sendReceiveSocket.send(sendPacket);
@@ -248,18 +248,14 @@ public class SimpleEchoClient {
 	 	    	  
 	 	      }
 	 	     
-	 	      /*
 	 	     //Writing file to local disk
-	 	     try {
+	 	   /* try {
 	 	    	System.out.println("Writing file to local disk...\n");
 	 			OutputStream outStream = new FileOutputStream(filename);
 	 			output.writeTo(outStream);
 	 	     } catch (IOException e) {
 	 			e.printStackTrace();
-	 	     }
-	 	     */
-	 	      
-	      
+	 	     }*/
 	      }
    }
    
@@ -270,6 +266,7 @@ public class SimpleEchoClient {
 	   	  byte[] writeFileBytes = new byte[(int) writeFile.length()];
 	   	  try {
 			FileInputStream outWriteFile = new FileInputStream(writeFile);
+			System.out.println("WOW");
 			outWriteFile.read(writeFileBytes);
 	   	  } catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block
@@ -386,7 +383,8 @@ public class SimpleEchoClient {
 	 		      System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + received + "\n");
 	 		      
 	 		      //-----------SENDING REQUEST----------------
-	 		      // Send the datagram packet to the server via the send/receive socket. 
+	 		      // Send the datagram packet to the server via the send/receive socket.
+	 		      
 	 		      try {
 	 		         sendReceiveSocket.send(sendPacket);
 	 		      } catch (IOException e) {
@@ -395,30 +393,32 @@ public class SimpleEchoClient {
 	 		      }
 
 	 		      System.out.println("Client: Packet sent.\n"); 
+	 		      
+		 	      //-----------RECEIVING REQUEST----------------
+		 	      try {
+		 	    	  // Block until a datagram is received via sendReceiveSocket.  
+		 	    	  sendReceiveSocket.receive(receivePacket);
+		 	    	  block++;
+		 	      } catch(IOException e) {
+		 	    	  e.printStackTrace();
+		 	    	  System.exit(1);
+		 	      }
+		 		     
+		 	      // Process the received datagram.
+		 	      System.out.println("Client: Packet received:");
+		 	      System.out.println("From Server: " + receivePacket.getAddress());
+		 	      System.out.println("Server port: " + receivePacket.getPort());
+		 	      len = receivePacket.getLength();
+		 	      System.out.println("Length: " + len);
+		 	      System.out.print("Containing: \n");
+		 	      // Form a String from the byte array.
+		 	      received = new String(receivePacket.getData());   
+		 	      System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form:" + receivePacket.getData()[0] + receivePacket.getData()[1] + "\n");
+		 	      
+		 	     count = count+packetSize;
+	 	      
 	 	      }
 	 	      
-	 	      //-----------RECEIVING REQUEST----------------
-	 	      try {
-	 	    	  // Block until a datagram is received via sendReceiveSocket.  
-	 	    	  sendReceiveSocket.receive(receivePacket);
-	 	    	  block++;
-	 	      } catch(IOException e) {
-	 	    	  e.printStackTrace();
-	 	    	  System.exit(1);
-	 	      }
-	 		     
-	 	      // Process the received datagram.
-	 	      System.out.println("Client: Packet received:");
-	 	      System.out.println("From Server: " + receivePacket.getAddress());
-	 	      System.out.println("Server port: " + receivePacket.getPort());
-	 	      len = receivePacket.getLength();
-	 	      System.out.println("Length: " + len);
-	 	      System.out.print("Containing: \n");
-	 	      // Form a String from the byte array.
-	 	      received = new String(receivePacket.getData());   
-	 	      System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form:" + receivePacket.getData()[0] + receivePacket.getData()[1] + "\n");
-	 	      
-	 	      count = count+packetSize;
 	      }
    }
 

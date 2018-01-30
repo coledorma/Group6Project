@@ -12,9 +12,12 @@ public class SimpleEchoErrorSimulator {
 
    DatagramPacket sendPacket, receivePacket;
    DatagramSocket sendReceiveSocket, receiveSocket;
+   
+   int ccPort;
 
    public SimpleEchoErrorSimulator()
    {
+	   ccPort = 0;
       try {
          // Construct a datagram socket and bind it to any available 
          // port on the local host machine. This socket will be used to
@@ -41,13 +44,15 @@ public class SimpleEchoErrorSimulator {
 	   
 	 //Receiving message from server-------------------------------------------------
 
-      byte data[] = new byte[100];
+      byte data[] = new byte[516];
       receivePacket = new DatagramPacket(data, data.length);
       System.out.println("Intermediate Host: Waiting for Packet.\n");
+      
 
       // Block until a datagram packet is received from receiveSocket.
       try {        
          System.out.println("Waiting..."); // so we know we're waiting
+         System.out.println(receiveSocket.getPort());
          receiveSocket.receive(receivePacket);
       } catch (IOException e) {
          System.out.print("IO Exception: likely:");
@@ -78,31 +83,16 @@ public class SimpleEchoErrorSimulator {
           System.exit(1);
       }
  
-      // Create a new datagram packet containing the string received from the client.
 
-      // Construct a datagram packet that is to be sent to a specified port 
-      // on a specified host.
-      // The arguments are:
-      //  data - the packet data (a byte array). This is the packet data
-      //         that was received from the client.
-      //  receivePacket.getLength() - the length of the packet data.
-      //    Since we are echoing the received packet, this is the length 
-      //    of the received packet's data. 
-      //    This value is <= data.length (the length of the byte array).
-      //  receivePacket.getAddress() - the Internet address of the 
-      //     destination host. Since we want to send a packet back to the 
-      //     client, we extract the address of the machine where the
-      //     client is running from the datagram that was sent to us by 
-      //     the client.
-      //  receivePacket.getPort() - the destination port number on the 
-      //     destination host where the client is running. The client
-      //     sends and receives datagrams through the same socket/port,
-      //     so we extract the port that the client used to send us the
-      //     datagram, and use that as the destination port for the echoed
-      //     packet.
-
-      sendPacket = new DatagramPacket(data, receivePacket.getLength(),
-                               receivePacket.getAddress(), 6969);
+      System.out.println(ccPort);
+      if (ccPort == 0) {
+    	  	sendPacket = new DatagramPacket(data, receivePacket.getLength(),
+                  receivePacket.getAddress(), 6969);
+      } else {
+    	  sendPacket = new DatagramPacket(data, receivePacket.getLength(),
+                  receivePacket.getAddress(), ccPort);
+      }
+      
 
       System.out.println( "Intermediate Host: Sending packet");
       System.out.println("To server: " + sendPacket.getAddress());
@@ -128,13 +118,14 @@ public class SimpleEchoErrorSimulator {
       
       //Receiving message from server-------------------------------------------------
 
-      byte data2[] = new byte[100];
+      byte data2[] = new byte[516];
       receivePacket = new DatagramPacket(data2, data2.length);
       System.out.println("Intermediate Host: Waiting for Packet.\n");
 
       // Block until a datagram packet is received from receiveSocket.
       try {        
          System.out.println("Waiting..."); // so we know we're waiting
+         System.out.println(sendReceiveSocket.getLocalPort());
          sendReceiveSocket.receive(receivePacket);
       } catch (IOException e) {
          System.out.print("IO Exception: likely:");
@@ -147,6 +138,7 @@ public class SimpleEchoErrorSimulator {
       System.out.println("Intermediate Host: Packet received");
       System.out.println("From Server: " + receivePacket.getAddress());
       System.out.println("Server port: " + receivePacket.getPort());
+      ccPort = receivePacket.getPort();
       int len2 = receivePacket.getLength();
       System.out.println("Length: " + len);
       System.out.print("Containing: " );
@@ -155,38 +147,16 @@ public class SimpleEchoErrorSimulator {
       String received2 = new String(receivePacket.getData());   
       System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String Form: " + receivePacket.getData()[0] + receivePacket.getData()[1] + receivePacket.getData()[2] + receivePacket.getData()[3] + "\n");
       
-   // Create a new datagram packet containing the string received from the client.
-
-      // Construct a datagram packet that is to be sent to a specified port 
-      // on a specified host.
-      // The arguments are:
-      //  data - the packet data (a byte array). This is the packet data
-      //         that was received from the client.
-      //  receivePacket.getLength() - the length of the packet data.
-      //    Since we are echoing the received packet, this is the length 
-      //    of the received packet's data. 
-      //    This value is <= data.length (the length of the byte array).
-      //  receivePacket.getAddress() - the Internet address of the 
-      //     destination host. Since we want to send a packet back to the 
-      //     client, we extract the address of the machine where the
-      //     client is running from the datagram that was sent to us by 
-      //     the client.
-      //  receivePacket.getPort() - the destination port number on the 
-      //     destination host where the client is running. The client
-      //     sends and receives datagrams through the same socket/port,
-      //     so we extract the port that the client used to send us the
-      //     datagram, and use that as the destination port for the echoed
-      //     packet.
       
       sendPacket = new DatagramPacket(data2, receivePacket.getLength(),
                                clientAddress, clientPort);
-      
+      /*
       try {
     	sendReceiveSocket = new DatagramSocket();
       } catch (SocketException e1) {
   		// TODO Auto-generated catch block
   		e1.printStackTrace();
-      }
+      }*/
 
       System.out.println( "Intermediate Host: Sending packet");
       System.out.println("To client: " + sendPacket.getAddress());
@@ -217,9 +187,6 @@ public class SimpleEchoErrorSimulator {
           System.exit(1);
       }
 
-      // We're finished, so close the sockets.
-      //sendReceiveSocket.close();
-      //receiveSocket.close();
    }
    
 
@@ -227,7 +194,7 @@ public class SimpleEchoErrorSimulator {
    {
 	  SimpleEchoErrorSimulator c = new SimpleEchoErrorSimulator();
 	  while(true){
-    	  c.receiveAndEcho(); 
+    	  	c.receiveAndEcho(); 
       }
    }
 }
