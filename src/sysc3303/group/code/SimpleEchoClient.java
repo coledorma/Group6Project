@@ -61,7 +61,7 @@ public class SimpleEchoClient {
 		   }
 		   
 	   } else if (requestAnswer.equals("W") || requestAnswer.equals("w")){ 
-		 //Wait for filename
+		   //Wait for filename
 		   Scanner readFileInput = new Scanner(System.in);
 		   System.out.println("What is the name of the file you would like to write? ");
 		   String requestFileName = readFileInput.next(); // Scans the next token of the input as an int.
