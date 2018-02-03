@@ -291,7 +291,7 @@ public class SimpleEchoClient {
    public void sendWriteRequest(String filename){
 	   	  //Setup file to send
 	   	  File writeFile = new File(filename);
-	   	  byte[] writeFileBytes = new byte[(int) writeFile.length()];
+	   	  byte[] writeFileBytes = new byte[(int) writeFile.length()+1];
 	   	  try {
 			FileInputStream outWriteFile = new FileInputStream(writeFile);
 			outWriteFile.read(writeFileBytes);
