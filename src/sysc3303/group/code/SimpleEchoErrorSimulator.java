@@ -52,7 +52,7 @@ public class SimpleEchoErrorSimulator {
       // Block until a datagram packet is received from receiveSocket.
       try {        
          System.out.println("Waiting..."); // so we know we're waiting
-         System.out.println(receiveSocket.getPort());
+//         System.out.println(receiveSocket.getPort());
          receiveSocket.receive(receivePacket);
       } catch (IOException e) {
          System.out.print("IO Exception: likely:");
