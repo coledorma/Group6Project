@@ -41,7 +41,6 @@ public class SimpleEchoClient {
 	   System.out.println("Would you like to send a read request or write request this client (R/W)? ");
 	   String requestAnswer = readUserInput.next(); // Scans the next token of the input as an int.
 	   //readUserInput.close();
-	   
 	   String filename;
 	   
 	   //Wait for answer from user for read or write request
@@ -191,6 +190,7 @@ public class SimpleEchoClient {
 		   e1.printStackTrace();
 	   }
 	   
+	//   ByteArrayOutputStream storeData = new ByteArrayOutputStream();
 	   while (!lastPacket) {
 	    	  try {
 	 	         // Block until a datagram is received via sendReceiveSocket.  
@@ -200,7 +200,7 @@ public class SimpleEchoClient {
 	 	         e.printStackTrace();
 	 	         System.exit(1);
 	 	      }
-
+	    	  
 	 	      // Process the received datagram.
 	 	      System.out.println("Client: Packet received:");
 	 	      System.out.println("Block number: " + block);
@@ -215,8 +215,8 @@ public class SimpleEchoClient {
 	 	      // Form a String from the byte array.
 	 	      received = new String(receivePacket.getData());   
 	 	      System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form:" + receivePacket.getData()[0] + receivePacket.getData()[1] + "\n");
-	 	      
-	 	      ByteArrayOutputStream output = new ByteArrayOutputStream();
+	 	      System.out.println("DATA: "+ new String(data));
+//	 	      ByteArrayOutputStream output = new ByteArrayOutputStream();
 	 	      
 	 	      //Check what type of response was received
 	 	      //DATA
@@ -297,7 +297,6 @@ public class SimpleEchoClient {
 	   	  byte[] writeFileBytes = new byte[(int) writeFile.length()];
 	   	  try {
 			FileInputStream outWriteFile = new FileInputStream(writeFile);
-			System.out.println("WOW");
 			outWriteFile.read(writeFileBytes);
 	   	  } catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block
@@ -391,7 +390,6 @@ public class SimpleEchoClient {
 	 	    	  }
 	 	    	  
 	 	    	  msg = createDataRequest(zero,DATA,blockNumber[0],blockNumber[1],dataBlock);
-	 		      
 	 		      message = new String(msg); 
 	 		      System.out.println("Client: sending a packet containing:\n" + "Byte Form: " + msg + "\n" + "String Form: " + message + "\n");
 	 		      

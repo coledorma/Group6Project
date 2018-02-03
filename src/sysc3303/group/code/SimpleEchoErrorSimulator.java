@@ -17,7 +17,7 @@ public class SimpleEchoErrorSimulator {
 
    public SimpleEchoErrorSimulator()
    {
-	   ccPort = 0;
+      ccPort = 0;
       try {
          // Construct a datagram socket and bind it to any available 
          // port on the local host machine. This socket will be used to
@@ -41,8 +41,8 @@ public class SimpleEchoErrorSimulator {
    {
       // Construct a DatagramPacket for receiving packets up 
       // to 100 bytes long (the length of the byte array).
-	   
-	 //Receiving message from server-------------------------------------------------
+      
+    //Receiving message from server-------------------------------------------------
 
       byte data[] = new byte[516];
       receivePacket = new DatagramPacket(data, data.length);
@@ -86,10 +86,10 @@ public class SimpleEchoErrorSimulator {
 
       System.out.println(ccPort);
       if (ccPort == 0) {
-    	  	sendPacket = new DatagramPacket(data, receivePacket.getLength(),
+         sendPacket = new DatagramPacket(data, receivePacket.getLength(),
                   receivePacket.getAddress(), 6969);
       } else {
-    	  sendPacket = new DatagramPacket(data, receivePacket.getLength(),
+        sendPacket = new DatagramPacket(data, receivePacket.getLength(),
                   receivePacket.getAddress(), ccPort);
       }
       
@@ -152,10 +152,10 @@ public class SimpleEchoErrorSimulator {
                                clientAddress, clientPort);
       /*
       try {
-    	sendReceiveSocket = new DatagramSocket();
+      sendReceiveSocket = new DatagramSocket();
       } catch (SocketException e1) {
-  		// TODO Auto-generated catch block
-  		e1.printStackTrace();
+      // TODO Auto-generated catch block
+      e1.printStackTrace();
       }*/
 
       System.out.println( "Intermediate Host: Sending packet");
@@ -192,9 +192,9 @@ public class SimpleEchoErrorSimulator {
 
    public static void main( String args[] )
    {
-	  SimpleEchoErrorSimulator c = new SimpleEchoErrorSimulator();
-	  while(true){
-    	  	c.receiveAndEcho(); 
+     SimpleEchoErrorSimulator c = new SimpleEchoErrorSimulator();
+     while(true){
+         c.receiveAndEcho(); 
       }
    }
 }

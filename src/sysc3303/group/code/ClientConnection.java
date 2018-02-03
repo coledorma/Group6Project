@@ -4,12 +4,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 public class ClientConnection implements Runnable {
@@ -33,6 +37,16 @@ public class ClientConnection implements Runnable {
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public String getTextName(byte[] data) {
+		int count = 2;
+		byte[] temp = new byte[50];
+		while(data[count] != 0) {
+			temp[count - 2] = data[count];
+			count++;
+		}
+		return new String(temp);
 	}
 	
 	@Override
@@ -59,10 +73,12 @@ public class ClientConnection implements Runnable {
 	    file is the filename that the user wants to read
 		TODO: search this file in DB and retrieve it
 	    */
-	    String file = new String(temp,0,temp.length);
-	    
-	    // For now, just get file from local disk
-	   	File writeFile = new File("testRead1.txt");
+	    String workingDir = System.getProperty("user.dir");
+	    String file = workingDir +"/Database/"+ new String(temp,0,temp.length);
+	    System.out.println(file);
+
+	   	File writeFile = new File(file.trim());
+	   	
 	   	byte[] writeFileBytes = new byte[(int) writeFile.length()];
 	   	try {
 			FileInputStream outWriteFile = new FileInputStream(writeFile);
@@ -126,6 +142,7 @@ public class ClientConnection implements Runnable {
 		 	try {
 		 		System.out.println("WAITING FOR ACK");
 		 		sendReceiveSocket.receive(receivePacket);
+		 		System.out.println("ACK Received!");
 		 		block++;
 		 	} catch(IOException e) {
 		 		e.printStackTrace();
@@ -150,12 +167,11 @@ public class ClientConnection implements Runnable {
 		System.out.println("Sending ACK of WRQ");
 		try {
 	         sendReceiveSocket.send(sendPacket);
+	         System.out.println("Server: ACK Sent.\n");
 	    } catch (IOException e) {
 	         e.printStackTrace();
 	         System.exit(1);
 	    }
-
-	     System.out.println("Server: ACK Sent.\n");
 	     
 	      try {
 	          Thread.sleep(5000);
@@ -167,10 +183,12 @@ public class ClientConnection implements Runnable {
 	      boolean lastPacket = false;
 	      byte[] blockNumberHolder = null;
 	      
+	      ByteArrayOutputStream storeData = new ByteArrayOutputStream();
+	      
 	      while(!lastPacket) {
 	    	  // Now was for first block of file to be sent
-		      byte data[] = new byte[516];
-		      sendReceivePacket = new DatagramPacket(data, data.length);
+		      byte data1[] = new byte[516];
+		      sendReceivePacket = new DatagramPacket(data1, data1.length);
 		      System.out.println("Server: Waiting for DATA.\n");
 		      byte[] blockNumber = {sendReceivePacket.getData()[2], sendReceivePacket.getData()[3]};
 		      blockNumberHolder = blockNumber;
@@ -186,7 +204,8 @@ public class ClientConnection implements Runnable {
 		      }
 
 		      // If block size is under 516 it is the last block of data to receive
-		      int len = receivePacket.getLength();
+		      int len = sendReceivePacket.getLength();
+
 	 	      if (len < 516){
 	 	    	  	lastPacket = true;
 	 	      }
@@ -195,12 +214,20 @@ public class ClientConnection implements Runnable {
 				TODO: store blocks of file in DB
 		      */
 		      System.out.println("Received Data:");
- 		      System.out.println("Block: " + data);
+ 		      System.out.println("Block: " + data1);
  		      System.out.println("Destination Server port: " + sendReceivePacket.getPort());
  		      System.out.print("Containing: \n");
  		      String received = new String(sendReceivePacket.getData()); 
  		      System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + received + "\n");
-   
+ 		      
+ 		      try {
+ 		    	//add all the contents into an array of bytes 
+				storeData.write(data1);
+				System.out.println("WOW :" +new String(data1));
+				System.out.println(data1.length);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
  		      
  		      
  		      // Send ACK of DATA to client before waiting to receive next block
@@ -218,7 +245,36 @@ public class ClientConnection implements Runnable {
  			  System.out.println("Server: ACK sent.\n"); 
  		      
 	      }
-	           
+	      
+	      byte[] out = storeData.toByteArray();
+//	      System.out.println("OUT: " + out[0]);
+//	      System.out.println("OUT1: "+ new String(out));
+	      
+	      String workingDir = System.getProperty("user.dir");
+	      
+	      //create the file
+	      File f = new File(workingDir + "/Database/testRead1.txt");
+	      if(!f.exists()){
+	         try {
+				f.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+	      }
+	      //now write to the file
+	      try {
+	    	System.out.println("Writing File to Database...");
+	   
+			FileOutputStream fout=new FileOutputStream(workingDir + "/Database/" + getTextName(data).trim());
+			fout.write(out);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}  
+	      
 	}
 	
 	   public byte[] createAckRequest(byte firstByte, byte secondByte, byte block1, byte block2){
