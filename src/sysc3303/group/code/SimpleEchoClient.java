@@ -49,7 +49,6 @@ public class SimpleEchoClient {
 		   Scanner readFileInput = new Scanner(System.in);
 		   System.out.println("What is the name of the file you would like to read? ");
 		   String requestFileName = readFileInput.next(); // Scans the next token of the input as an int.
-		   readFileInput.close();
 		   
 		   if (requestFileName != null){
 			   System.out.println("Sending read request...");
@@ -64,7 +63,6 @@ public class SimpleEchoClient {
 		   Scanner readFileInput = new Scanner(System.in);
 		   System.out.println("What is the name of the file you would like to write? ");
 		   String requestFileName = readFileInput.next(); // Scans the next token of the input as an int.
-		   readFileInput.close();
 		   
 		   System.out.println("Sending write request...");
 		   
@@ -78,7 +76,6 @@ public class SimpleEchoClient {
 	   Scanner readInput = new Scanner(System.in);
 	   System.out.println("Would you like to shutdown this client (Y/N)? ");
 	   String shutdownAnswer = readInput.next(); // Scans the next token of the input as an int.
-	   readInput.close();
 
 	   //Wait for answer from user
 	   if (shutdownAnswer.equals("Y") || shutdownAnswer.equals("y")){
