@@ -253,7 +253,7 @@ public class ClientConnection implements Runnable {
 	      String workingDir = System.getProperty("user.dir");
 	      
 	      //create the file
-	      File f = new File(workingDir + "/Database/testRead1.txt");
+	      File f = new File(workingDir + "/Database/" + getTextName(data).trim());
 	      if(!f.exists()){
 	         try {
 				f.createNewFile();
