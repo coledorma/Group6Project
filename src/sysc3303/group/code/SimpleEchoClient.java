@@ -290,7 +290,9 @@ public class SimpleEchoClient {
    
    public void sendWriteRequest(String filename){
 	   	  //Setup file to send
+	   	System.out.println("Here1");
 	   	  File writeFile = new File(filename);
+	   	  System.out.println("Here2");
 	   	  byte[] writeFileBytes = new byte[(int) writeFile.length()+1];
 	   	  try {
 			FileInputStream outWriteFile = new FileInputStream(writeFile);
@@ -377,8 +379,8 @@ public class SimpleEchoClient {
 	 	    	  
 	 	    	  //Create and send DATA request of ACK received
 	 	    	  //Create block of data to send
-	 	    	  if (writeFileBytes.length-count >= packetSize){
-	 	    		 dataBlock = Arrays.copyOfRange(writeFileBytes, count, count+packetSize);
+	 	    	  if (writeFileBytes.length-count >= 512){
+	 	    		 dataBlock = Arrays.copyOfRange(writeFileBytes, count, count+512);
 	 	    	  //Last block to send
 	 	    	  } else {
 	 	    		 dataBlock = Arrays.copyOfRange(writeFileBytes, count, writeFileBytes.length);
@@ -441,7 +443,7 @@ public class SimpleEchoClient {
 		 	      received = new String(receivePacket.getData());   
 		 	      System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form:" + receivePacket.getData()[0] + receivePacket.getData()[1] + "\n");
 		 	      
-		 	     count = count+packetSize;
+		 	     count = count+512;
 	 	      
 	 	      }
 	 	      

@@ -29,6 +29,7 @@ public class SimpleEchoServer {
 
    public void receiveAndEcho()
    {
+	   Thread thread = null;
       // Construct a DatagramPacket for receiving packets up 
       // to 100 bytes long (the length of the byte array).
       byte data[] = new byte[100];
@@ -46,17 +47,22 @@ public class SimpleEchoServer {
 	    	  	throw new IllegalArgumentException("Request is invalid");
 	      } else {
 	      		// Request is valid so create a new client connection thread and pass original request to it as data
-	    	  	new Thread(new ClientConnection(data, receivePacket, receiveSocket)).start();	
+	    		thread = new Thread(new ClientConnection(data, receivePacket, receiveSocket));
+	    	  	thread.start();
+	    	  	
 	      }
          System.out.println("Creating new Client Connection Thread...");
+         thread.join();
       } catch (IOException e) {
          System.out.print("IO Exception: likely:");
          System.out.println("Receive Socket Timed Out.\n" + e);
          e.printStackTrace();
          System.exit(1);
-      }
+      } catch (InterruptedException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
       
-
       Scanner readInput = new Scanner(System.in);
 	  System.out.println("Would you like to shutdown the server (Y/N)? ");
 	  String shutdownAnswer = readInput.next(); // Scans the next token of the input as an int.
@@ -67,6 +73,7 @@ public class SimpleEchoServer {
 		  System.out.println("Shutting the server down.");
 		  System.exit(1);
 	  } 
+    
    }
    
 
