@@ -49,7 +49,6 @@ public class ClientConnection implements Runnable {
 		return new String(temp);
 	}
 	
-	@Override
 	public void run() {
 		// Distinguish whether request is WRQ or RRQ and call appropriate functions
 	    byte one = 1;
