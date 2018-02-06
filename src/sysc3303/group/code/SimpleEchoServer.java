@@ -20,6 +20,7 @@ public class SimpleEchoServer {
    {
       try {
          receiveSocket = new DatagramSocket(6969);
+         //Katie test
          
       } catch (SocketException se) {
          se.printStackTrace();
