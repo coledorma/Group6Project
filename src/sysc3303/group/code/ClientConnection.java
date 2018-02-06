@@ -28,7 +28,7 @@ public class ClientConnection implements Runnable {
     byte DATA = 3;
     byte ACK = 4;
     byte msg[];
-	
+	//test
 	public ClientConnection(byte[] fileData, DatagramPacket packet,DatagramSocket socket){
 		data = fileData;
 		sendReceivePacket = packet;
