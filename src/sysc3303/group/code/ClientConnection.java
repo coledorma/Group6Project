@@ -75,7 +75,6 @@ public class ClientConnection implements Runnable {
 	    */
 	    String workingDir = System.getProperty("user.dir");
 	    String file = workingDir +"/Database/"+ new String(temp,0,temp.length);
-	    System.out.println(file);
 
 	   	File writeFile = new File(file.trim());
 	   	
@@ -108,8 +107,8 @@ public class ClientConnection implements Runnable {
 		 	    	  
 		 	   	//Create and send DATA request of ACK received
 		 	   	//Create block of data to send
-		 	    if (writeFileBytes.length-count >= packetSize){
-		 	    	dataBlock = Arrays.copyOfRange(writeFileBytes, count, count+packetSize);
+		 	    if (writeFileBytes.length-count >= 512){
+		 	    	dataBlock = Arrays.copyOfRange(writeFileBytes, count, count+512);
 		 	    } else {
 		 	    	//Last block to send
 		 	    	dataBlock = Arrays.copyOfRange(writeFileBytes, count, writeFileBytes.length);
@@ -123,8 +122,9 @@ public class ClientConnection implements Runnable {
 		 		System.out.println("Server: sending a packet containing:\n" + "Byte Form: " + msg + "\n" + "String Form: " + message + "\n");
 		 		      
 		 		sendReceivePacket = new DatagramPacket(msg, msg.length, sendReceivePacket.getAddress(), sendReceivePacket.getPort());
-		 		System.out.println(sendReceivePacket.getPort());
-		 		System.out.println(msg.length);
+
+
+
 
 		 		try {
 		 		    sendReceiveSocket.send(sendReceivePacket);
@@ -136,7 +136,7 @@ public class ClientConnection implements Runnable {
 		 		 System.out.println("Server: Block of DATA sent.\n"); 
 		 	}
 		 	      
-		 	count = count+packetSize;	  
+		 	count = count+512;	  
 		 	     
 		 	// Once first block of data as been sent, wait for ACK from client before sending another block
 		 	try {
@@ -210,9 +210,6 @@ public class ClientConnection implements Runnable {
 	 	    	  	lastPacket = true;
 	 	      }
 
-		      /*
-				TODO: store blocks of file in DB
-		      */
 		      System.out.println("Received Data:");
  		      System.out.println("Block: " + data1);
  		      System.out.println("Destination Server port: " + sendReceivePacket.getPort());
@@ -223,8 +220,6 @@ public class ClientConnection implements Runnable {
  		      try {
  		    	//add all the contents into an array of bytes 
 				storeData.write(data1);
-				System.out.println("WOW :" +new String(data1));
-				System.out.println(data1.length);
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}

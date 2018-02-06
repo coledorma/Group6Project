@@ -42,7 +42,6 @@ public class SimpleEchoErrorSimulator {
       // Construct a DatagramPacket for receiving packets up 
       // to 100 bytes long (the length of the byte array).
       
-    //Receiving message from server-------------------------------------------------
 
       byte data[] = new byte[516];
       receivePacket = new DatagramPacket(data, data.length);
@@ -84,7 +83,6 @@ public class SimpleEchoErrorSimulator {
       }
  
 
-      System.out.println(ccPort);
       if (ccPort == 0) {
          sendPacket = new DatagramPacket(data, receivePacket.getLength(),
                   receivePacket.getAddress(), 6969);
@@ -102,8 +100,7 @@ public class SimpleEchoErrorSimulator {
       System.out.print("Containing: ");
       received = new String(sendPacket.getData());  
       System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + received + "\n");
-      // or (as we should be sending back the same thing)
-      // System.out.println(received); 
+      System.out.println("DATA: "+ new String(data));
         
       // Send the datagram packet to the client via the send socket. 
       try {
@@ -148,15 +145,8 @@ public class SimpleEchoErrorSimulator {
       System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String Form: " + receivePacket.getData()[0] + receivePacket.getData()[1] + receivePacket.getData()[2] + receivePacket.getData()[3] + "\n");
       
       
-      sendPacket = new DatagramPacket(data2, receivePacket.getLength(),
+      sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),
                                clientAddress, clientPort);
-      /*
-      try {
-      sendReceiveSocket = new DatagramSocket();
-      } catch (SocketException e1) {
-      // TODO Auto-generated catch block
-      e1.printStackTrace();
-      }*/
 
       System.out.println( "Intermediate Host: Sending packet");
       System.out.println("To client: " + sendPacket.getAddress());
@@ -166,8 +156,8 @@ public class SimpleEchoErrorSimulator {
       System.out.print("Containing: ");
       received = new String(sendPacket.getData());
       System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + sendPacket.getData()[0] + sendPacket.getData()[1] + sendPacket.getData()[2] + sendPacket.getData()[3] + "\n");
-      // or (as we should be sending back the same thing)
-      // System.out.println(received); 
+      
+      System.out.println("DATA: "+ new String(data2));
         
       // Send the datagram packet to the client via the send socket. 
       try {
