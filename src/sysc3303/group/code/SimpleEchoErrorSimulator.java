@@ -81,7 +81,14 @@ public class SimpleEchoErrorSimulator {
           e.printStackTrace();
           System.exit(1);
       }
- 
+      /*//Check if this is a new RRQ/WRQ and forwards message to the listener port for the server
+        byte zero = 0;
+	    byte one = 1;
+	    byte two = 2;
+	    if (!(msg[0] == zero && msg[1] == one || msg[0] == zero && msg[1] == two)) {
+		    ccPort = 0;
+	    }
+       */
 
       if (ccPort == 0) {
          sendPacket = new DatagramPacket(data, receivePacket.getLength(),
