@@ -23,12 +23,15 @@ public class ClientConnection implements Runnable {
 	DatagramPacket receivePacket;
     int packetSize = 516;
     byte zero = 0;
+    byte fileExistErrCode = 6;
     byte RRQ = 1;
     byte WRQ = 2;
     byte DATA = 3;
     byte ACK = 4;
+    byte ERROR = 5;
     byte msg[];
-	//test
+    boolean errorSent = false;
+
 	public ClientConnection(byte[] fileData, DatagramPacket packet,DatagramSocket socket){
 		data = fileData;
 		sendReceivePacket = packet;
@@ -159,9 +162,34 @@ public class ClientConnection implements Runnable {
 		byte msg[];
 		msg = createAckRequest(zero,ACK,zero,zero);
 		DatagramPacket sendPacket;
-		
 		sendPacket = new DatagramPacket(msg, msg.length,
 	    		sendReceivePacket.getAddress(), sendReceivePacket.getPort());
+		
+		String currDir = System.getProperty("user.dir");
+	      
+		//Check for same file in database, if so, create and send ERROR request
+		File f = new File(currDir + "/Database/" + getTextName(data).trim());
+		if (f.exists()) {
+			String errStr = "ERROR: File already exists.";
+			System.out.println(errStr);
+			byte[] errMsg = errStr.getBytes();
+			byte ackToSend[];
+			System.out.println("Server: ERROR request created.");
+			ackToSend = createErrorRequest(zero,ERROR,zero,fileExistErrCode,errMsg,zero);
+			sendPacket = new DatagramPacket(ackToSend, ackToSend.length, sendReceivePacket.getAddress(), sendReceivePacket.getPort());
+			
+			//Sending ERROR request
+			try {
+				sendReceiveSocket.send(sendPacket);
+				System.out.println("Server: ERROR request sent.");
+				errorSent = true;
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
+		}
+		
+		while(!errorSent){
 		
 		System.out.println("Sending ACK of WRQ");
 		try {
@@ -219,9 +247,9 @@ public class ClientConnection implements Runnable {
  		      try {
  		    	//add all the contents into an array of bytes 
 				storeData.write(data1);
-			} catch (IOException e1) {
+ 		      } catch (IOException e1) {
 				e1.printStackTrace();
-			}
+ 		      }
  		      
  		      
  		      // Send ACK of DATA to client before waiting to receive next block
@@ -230,44 +258,39 @@ public class ClientConnection implements Runnable {
  		      sendPacket = new DatagramPacket(ackToSend, ackToSend.length, sendReceivePacket.getAddress(), sendReceivePacket.getPort());
  		      
  		      try {
- 			         sendReceiveSocket.send(sendPacket);
- 			      } catch (IOException e) {
- 			         e.printStackTrace();
- 			         System.exit(1);
- 			      }
+ 		    	  sendReceiveSocket.send(sendPacket);
+ 		      } catch (IOException e) {
+ 		    	  e.printStackTrace();
+ 		    	  System.exit(1);
+ 		      }
 
  			  System.out.println("Server: ACK sent.\n"); 
  		      
 	      }
 	      
-	      byte[] out = storeData.toByteArray();
-//	      System.out.println("OUT: " + out[0]);
-//	      System.out.println("OUT1: "+ new String(out));
 	      
-	      String workingDir = System.getProperty("user.dir");
+	    	  byte[] out = storeData.toByteArray();
+	    	  //System.out.println("OUT: " + out[0]);
+	    	  //System.out.println("OUT1: "+ new String(out));
 	      
-	      //create the file
-	      File f = new File(workingDir + "/Database/" + getTextName(data).trim());
-	      if(!f.exists()){
-	         try {
-				f.createNewFile();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-	      }
-	      //now write to the file
-	      try {
-	    	System.out.println("Writing File to Database...");
-	   
-			FileOutputStream fout=new FileOutputStream(workingDir + "/Database/" + getTextName(data).trim());
-			fout.write(out);
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}  
+	    	  String workingDir = System.getProperty("user.dir");
+	      
+	    	  //now write to the file
+	    	  try {
+	    		  System.out.println("Writing File to Database...");
+	    		  FileOutputStream fout=new FileOutputStream(workingDir + "/Database/" + getTextName(data).trim());
+	    		  fout.write(out);
+	      		} catch (FileNotFoundException e) {
+	      			// TODO Auto-generated catch block
+	      			e.printStackTrace();
+	      		} catch (IOException e) {
+	      			// TODO Auto-generated catch block
+	      			e.printStackTrace();
+	      		}
+	    	  
+	    	  
+		}
+	      errorSent = false;
 	      
 	}
 	
@@ -295,6 +318,25 @@ public class ClientConnection implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		   
+		   byte msg[] = output.toByteArray();
+		   return msg;
+	   }
+	   
+	   public byte[] createErrorRequest(byte firstByte, byte secondByte, byte errCode1, byte errCode2, byte[] errMsg, byte lastByte){
+		   ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+		   output.write(firstByte);
+		   output.write(secondByte);
+		   output.write(errCode1);
+		   output.write(errCode2);
+		   try {
+			   output.write(errMsg);
+		   } catch (IOException e) {
+			   // TODO Auto-generated catch block
+			   e.printStackTrace();
+		   }
+		   output.write(lastByte);
 		   
 		   byte msg[] = output.toByteArray();
 		   return msg;

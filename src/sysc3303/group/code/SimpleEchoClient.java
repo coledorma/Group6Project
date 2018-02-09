@@ -21,6 +21,7 @@ public class SimpleEchoClient {
    byte DATA = 3;
    byte ACK = 4;
    byte msg[];
+   boolean errorReceived = false;
 
    public SimpleEchoClient()
    {
@@ -136,39 +137,39 @@ public class SimpleEchoClient {
    }
    
    public void sendReadRequest(String filename){
-	   	  //----------FORMING DATAGRAM REQUEST------------------
-	   	  msg = createReadWriteRequest(zero,RRQ,filename,"octet");
+	   //----------FORMING DATAGRAM REQUEST------------------
+	   msg = createReadWriteRequest(zero,RRQ,filename,"octet");
 	      
-	      String message = new String(msg); 
-	      System.out.println("Client: sending a packet containing:\n" + "Byte Form: " + msg + "\n" + "String Form: " + message + "\n");
+	   String message = new String(msg); 
+	   System.out.println("Client: sending a packet containing:\n" + "Byte Form: " + msg + "\n" + "String Form: " + message + "\n");
 	      
-	      try {
-	         sendPacket = new DatagramPacket(msg, msg.length,
+	   try {
+		   sendPacket = new DatagramPacket(msg, msg.length,
 	                                         InetAddress.getLocalHost(), 2323);
-	      } catch (UnknownHostException e) {
-	         e.printStackTrace();
-	         System.exit(1);
-	      }
+	   } catch (UnknownHostException e) {
+		   e.printStackTrace();
+		   System.exit(1);
+	   }
 
-	      System.out.println("Client: Sending packet:");
-	      System.out.println("To Server: " + sendPacket.getAddress());
-	      System.out.println("Destination Server port: " + sendPacket.getPort());
-	      int len = sendPacket.getLength();
-	      System.out.println("Length: " + len);
-	      System.out.print("Containing: \n");
-	      String received = new String(sendPacket.getData()); 
-	      System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + received + "\n"); // or could print "s"
+	   System.out.println("Client: Sending packet:");
+	   System.out.println("To Server: " + sendPacket.getAddress());
+	   System.out.println("Destination Server port: " + sendPacket.getPort());
+	   int len = sendPacket.getLength();
+	   System.out.println("Length: " + len);
+	   System.out.print("Containing: \n");
+	   String received = new String(sendPacket.getData()); 
+	   System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + received + "\n"); // or could print "s"
 	      
-	      //-----------SENDING REQUEST----------------
-	      // Send the datagram packet to the server via the send/receive socket. 
-	      try {
-	         sendReceiveSocket.send(sendPacket);
-	      } catch (IOException e) {
-	         e.printStackTrace();
-	         System.exit(1);
-	      }
+	   //-----------SENDING REQUEST----------------
+	   // Send the datagram packet to the server via the send/receive socket. 
+	   try {
+		   sendReceiveSocket.send(sendPacket);
+	   } catch (IOException e) {
+		   e.printStackTrace();
+		   System.exit(1);
+	   }
 
-	      System.out.println("Client: Packet sent.\n");
+	   System.out.println("Client: Packet sent.\n");
 
 	      
 	   // Construct a DatagramPacket for receiving packets up 
@@ -180,12 +181,8 @@ public class SimpleEchoClient {
 	   
 	   File newReadFile = new File(filename);
 	   FileOutputStream receivedFile = null;
-	   try {
-		   receivedFile = new FileOutputStream(newReadFile);
-	   } catch (FileNotFoundException e1) {
-		   // TODO Auto-generated catch block
-		   e1.printStackTrace();
-	   }
+	   
+	   boolean overwrite = false;
 	   
 	//   ByteArrayOutputStream storeData = new ByteArrayOutputStream();
 	   while (!lastPacket) {
@@ -211,24 +208,63 @@ public class SimpleEchoClient {
 	 	      System.out.print("Containing: \n");
 	 	      // Form a String from the byte array.
 	 	      received = new String(receivePacket.getData());   
-	 	      System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form:" + receivePacket.getData()[0] + receivePacket.getData()[1] + "\n");
+	 	      System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form:" + received + "\n");
 	 	      System.out.println("DATA: "+ new String(data));
-//	 	      ByteArrayOutputStream output = new ByteArrayOutputStream();
+	 	      //ByteArrayOutputStream output = new ByteArrayOutputStream();
 	 	      
 	 	      //Check what type of response was received
 	 	      //DATA
 	 	      if (receivePacket.getData()[1] == 3) {
-	 	    	  
-		 	    	 if (!newReadFile.exists()) {
-		                    try {
-								newReadFile.createNewFile();
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-		 	    	 }
+	 	    	  //Check to see if file exists, if so, prompt user to either overwrite or not
+	 	    	  if (!newReadFile.exists()) {
+	 	    		  overwrite = true;
+	 	    		  try {
+	 	    			  receivedFile = new FileOutputStream(newReadFile);
+	 	    		  } catch (FileNotFoundException e1) {
+	 	    			  // TODO Auto-generated catch block
+	 	    			  e1.printStackTrace();
+	 	    		  }
+	 	    		  try {
+	 	    			  newReadFile.createNewFile();
+	 	    		  } catch (IOException e) {
+	 	    			  // TODO Auto-generated catch block
+	 	    			  e.printStackTrace();
+	 	    		  }
+	 	    	  } else if (!overwrite && newReadFile.exists()){
+	 	    		  //Read input from terminal
+	 	    		  Scanner readOverwriteInput = new Scanner(System.in);
+	 	    		  System.out.println("ERROR: File already exists. Would you like to overwrite it (Y/N)?");
+	 	    		  String overwriteAnswer = readOverwriteInput.next(); // Scans the next token of the input as an int.
+	 	    		  
+	 	    		  if (overwriteAnswer.equals("Y") || overwriteAnswer.equals("y")){
+	 	    			  overwrite = true;
+	 	    			  try {
+	 	    				  receivedFile = new FileOutputStream(newReadFile);
+		 	    		  } catch (FileNotFoundException e1) {
+		 	    			  // TODO Auto-generated catch block
+		 	    			  e1.printStackTrace();
+		 	    		  }
+	 	    			  try {
+	 	    				  System.out.println("Overwriting...");
+	 	    				  newReadFile.createNewFile();
+	 	    			  } catch (IOException e) {
+	 	    				  // TODO Auto-generated catch block
+	 	    				  e.printStackTrace();
+	 	    			  } 
+	 	    		  } else {
+	 	    			  System.out.println("Not Overwriting...");
+	 	    			  errorReceived = true;
+	 	    			  break;
+	 	    		  }
+	 	    	  } else {
+	 	    		 try {
+	 	    			  newReadFile.createNewFile();
+	 	    		  } catch (IOException e) {
+	 	    			  // TODO Auto-generated catch block
+	 	    			  e.printStackTrace();
+	 	    		  }
+	 	    	  }
 	 	    	  byte[] blockNumber = {receivePacket.getData()[2], receivePacket.getData()[3]};
-	 	    	  
 	 	    	  
 	 	    	  //DataOutputStream outStream = new DataOutputStream(output);
 	 	    	  try {
@@ -289,61 +325,59 @@ public class SimpleEchoClient {
    
    
    public void sendWriteRequest(String filename){
-	   	  //Setup file to send
-	   	System.out.println("Here1");
-	   	  File writeFile = new File(filename);
-	   	  System.out.println("Here2");
-	   	  byte[] writeFileBytes = new byte[(int) writeFile.length()+1];
-	   	  try {
-			FileInputStream outWriteFile = new FileInputStream(writeFile);
-			outWriteFile.read(writeFileBytes);
-	   	  } catch (FileNotFoundException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-	   	  } catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	   //Setup file to send
+	   File writeFile = new File(filename);
+	   byte[] writeFileBytes = new byte[(int) writeFile.length()+1];
+	   try {
+		   FileInputStream outWriteFile = new FileInputStream(writeFile);
+		   outWriteFile.read(writeFileBytes);
+	   } catch (FileNotFoundException e1) {
+		   // TODO Auto-generated catch block
+		   e1.printStackTrace();
+	   } catch (IOException e) {
+		   // TODO Auto-generated catch block
+		   e.printStackTrace();
+	   }
 	   
-	   	  //----------FORMING DATAGRAM REQUEST------------------
-	   	  msg = createReadWriteRequest(zero,WRQ,filename,"octet");
+	   //----------FORMING DATAGRAM REQUEST------------------
+	   msg = createReadWriteRequest(zero,WRQ,filename,"octet");
 	      
-	      String message = new String(msg); 
-	      System.out.println("Client: sending a packet containing:\n" + "Byte Form: " + msg + "\n" + "String Form: " + message + "\n");
+	   String message = new String(msg); 
+	   System.out.println("Client: sending a packet containing:\n" + "Byte Form: " + msg + "\n" + "String Form: " + message + "\n");
 	      
-	      try {
-	         sendPacket = new DatagramPacket(msg, msg.length,
-	                                         InetAddress.getLocalHost(), 2323);
-	      } catch (UnknownHostException e) {
-	         e.printStackTrace();
-	         System.exit(1);
-	      }
+	   try {
+		   sendPacket = new DatagramPacket(msg, msg.length,
+				   InetAddress.getLocalHost(), 2323);
+	   } catch (UnknownHostException e) {
+		   e.printStackTrace();
+		   System.exit(1);
+	   }
 
-	      System.out.println("Client: Sending packet:");
-	      System.out.println("To Server: " + sendPacket.getAddress());
-	      System.out.println("Destination Server port: " + sendPacket.getPort());
-	      int len = sendPacket.getLength();
-	      System.out.println("Length: " + len);
-	      System.out.print("Containing: \n");
-	      String received = new String(sendPacket.getData()); 
-	      System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + received + "\n"); // or could print "s"
+	   System.out.println("Client: Sending packet:");
+	   System.out.println("To Server: " + sendPacket.getAddress());
+	   System.out.println("Destination Server port: " + sendPacket.getPort());
+	   int len = sendPacket.getLength();
+	   System.out.println("Length: " + len);
+	   System.out.print("Containing: \n");
+	   String received = new String(sendPacket.getData()); 
+	   System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + received + "\n"); // or could print "s"
 	      
-	      //-----------SENDING REQUEST----------------
-	      // Send the datagram packet to the server via the send/receive socket. 
-	      try {
-	         sendReceiveSocket.send(sendPacket);
-	      } catch (IOException e) {
-	         e.printStackTrace();
-	         System.exit(1);
-	      }
+	   //-----------SENDING REQUEST----------------
+	   // Send the datagram packet to the server via the send/receive socket. 
+	   try {
+		   sendReceiveSocket.send(sendPacket);
+	   } catch (IOException e) {
+		   e.printStackTrace();
+		   System.exit(1);
+	   }
 
-	      System.out.println("Client: Packet sent.\n");
+	   System.out.println("Client: Packet sent.\n");
 	      
 	      
 	   // Construct a DatagramPacket for receiving packets up 
 	   // to 4 bytes long (the length of the byte array).
 	   int block = 0;
-	   byte data[] = new byte[4];
+	   byte data[] = new byte[100];
 	   receivePacket = new DatagramPacket(data, data.length);  
 	   boolean lastPacket = false;
 	   int count = 0;
@@ -366,9 +400,14 @@ public class SimpleEchoClient {
 	   System.out.print("Containing: \n");
 	   // Form a String from the byte array.
 	   received = new String(receivePacket.getData());   
-	   System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form:" + receivePacket.getData()[0] + receivePacket.getData()[1] + "\n");
+	   System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form: " + received + "\n");
 	   
-	   while (!lastPacket) {
+	   //Check to see if ERROR request received
+	   if (receivePacket.getData()[1] == 5) {
+		   errorReceived = true;
+	   }
+	   
+	   while (!lastPacket && !errorReceived) {
 	 	      ByteArrayOutputStream output = new ByteArrayOutputStream();
 	 	      
 	 	      //Check what type of response was received
@@ -441,13 +480,14 @@ public class SimpleEchoClient {
 		 	      System.out.print("Containing: \n");
 		 	      // Form a String from the byte array.
 		 	      received = new String(receivePacket.getData());   
-		 	      System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form:" + receivePacket.getData()[0] + receivePacket.getData()[1] + "\n");
+		 	      System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form:" + received + "\n");
 		 	      
 		 	     count = count+512;
 	 	      
 	 	      }
 	 	      
-	      }
+	   }
+	   errorReceived = false;
    }
 
    public static void main(String args[])
