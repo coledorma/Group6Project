@@ -24,6 +24,7 @@ public class ClientConnection implements Runnable {
     int packetSize = 516;
     byte zero = 0;
     byte fileExistErrCode = 6;
+    byte fileNotFoundErrCode = 1;
     byte RRQ = 1;
     byte WRQ = 2;
     byte DATA = 3;
@@ -73,7 +74,6 @@ public class ClientConnection implements Runnable {
 	    }
 	    /*  ***
 	    file is the filename that the user wants to read
-		TODO: search this file in DB and retrieve it
 	    */
 	    String workingDir = System.getProperty("user.dir");
 	    String file = workingDir +"/Database/"+ new String(temp,0,temp.length);
@@ -85,6 +85,25 @@ public class ClientConnection implements Runnable {
 			FileInputStream outWriteFile = new FileInputStream(writeFile);
 			outWriteFile.read(writeFileBytes);
 	   	} catch (FileNotFoundException e1) {
+	   		errorSent = true;
+	   		String errStr = "ERROR: File not found.";
+			System.out.println(errStr);
+			byte[] errMsg = errStr.getBytes();
+			byte errToSend[];
+			System.out.println("Server: ERROR request created.");
+			errToSend = createErrorRequest(zero,ERROR,zero,fileNotFoundErrCode,errMsg,zero);
+			DatagramPacket sendPacket = new DatagramPacket(errToSend, errToSend.length, sendReceivePacket.getAddress(), sendReceivePacket.getPort());
+			
+			//Sending ERROR request
+			try {
+				sendReceiveSocket.send(sendPacket);
+				System.out.println("Server: ERROR request sent.");
+				errorSent = true;
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
+			
 			e1.printStackTrace();
 	   	} catch (IOException e) {
 			e.printStackTrace();
@@ -99,7 +118,7 @@ public class ClientConnection implements Runnable {
 	    int check = 0;
 		   
 		// While there is still data to send (ie the packet is not the last block), keep sending data and then waiting for ACK
-		while (!lastPacket) {
+		while (!lastPacket && !errorSent) {
 		 	ByteArrayOutputStream output = new ByteArrayOutputStream();
 		 	      
 		 	// If ACK is valid from client or if it is original RRQ request, send block of data
@@ -152,6 +171,8 @@ public class ClientConnection implements Runnable {
 			}
   
 		}
+		
+		errorSent = false;
 		       
 	}
 	
@@ -173,10 +194,10 @@ public class ClientConnection implements Runnable {
 			String errStr = "ERROR: File already exists.";
 			System.out.println(errStr);
 			byte[] errMsg = errStr.getBytes();
-			byte ackToSend[];
+			byte errToSend[];
 			System.out.println("Server: ERROR request created.");
-			ackToSend = createErrorRequest(zero,ERROR,zero,fileExistErrCode,errMsg,zero);
-			sendPacket = new DatagramPacket(ackToSend, ackToSend.length, sendReceivePacket.getAddress(), sendReceivePacket.getPort());
+			errToSend = createErrorRequest(zero,ERROR,zero,fileExistErrCode,errMsg,zero);
+			sendPacket = new DatagramPacket(errToSend, errToSend.length, sendReceivePacket.getAddress(), sendReceivePacket.getPort());
 			
 			//Sending ERROR request
 			try {
