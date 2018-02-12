@@ -60,17 +60,30 @@ public class SimpleEchoClient {
 		   }
 		   
 	   } else if (requestAnswer.equals("W") || requestAnswer.equals("w")){ 
-		   //Wait for filename
-		   Scanner readFileInput = new Scanner(System.in);
-		   System.out.println("What is the name of the file you would like to write? ");
-		   String requestFileName = readFileInput.next(); // Scans the next token of the input as an int.
-		   
-		   System.out.println("Sending write request...");
-		   
-		   //Send write request and receive response
-		   filename = requestFileName;
-		   sendWriteRequest(filename);
-	   }
+			//Wait for filename
+			boolean validInput = false;
+			//will keep prompting for a filename until a valid one is given
+			do {
+				Scanner readFileInput = new Scanner(System.in);
+				System.out.println("What is the name of the file you would like to write? ");
+				String requestFileName = readFileInput.next(); // Scans the next token of the input as an int.
+
+
+				filename = requestFileName;
+				File checkFile = new File(filename);
+				if (!checkFile.exists()) {
+					System.out.println("That file does not exist.");
+				}else {
+					validInput = true;
+				}
+			}while(!validInput);
+
+			System.out.println("Sending write request...");
+
+			//Send write request and receive response
+			sendWriteRequest(filename);
+
+		}
 	   
 	      
 	   //Read input from terminal
@@ -490,9 +503,10 @@ public class SimpleEchoClient {
 	   errorReceived = false;
    }
 
-   public static void main(String args[])
-   {
-      SimpleEchoClient c = new SimpleEchoClient();
-      c.sendAndReceive();
+   public static void main(String args[]){
+	  while (true) {
+		  SimpleEchoClient c = new SimpleEchoClient();
+		  c.sendAndReceive();
+	  }
    }
 }
