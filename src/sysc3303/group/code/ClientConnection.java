@@ -162,6 +162,7 @@ public class ClientConnection implements Runnable {
 		 	// Once first block of data as been sent, wait for ACK from client before sending another block
 		 	try {
 		 		System.out.println("WAITING FOR ACK");
+		 		sendReceiveSocket.setSoTimeout(5000);
 		 		sendReceiveSocket.receive(receivePacket);
 		 		System.out.println("ACK Received!");
 		 		block++;
