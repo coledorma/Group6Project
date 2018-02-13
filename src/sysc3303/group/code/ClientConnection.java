@@ -162,7 +162,7 @@ public class ClientConnection implements Runnable {
 		 	// Once first block of data as been sent, wait for ACK from client before sending another block
 		 	try {
 		 		System.out.println("WAITING FOR ACK");
-		 		sendReceiveSocket.setSoTimeout(5000);
+		 		//sendReceiveSocket.setSoTimeout(5000);
 		 		sendReceiveSocket.receive(receivePacket);
 		 		System.out.println("ACK Received!");
 		 		block++;
@@ -263,12 +263,15 @@ public class ClientConnection implements Runnable {
  		      System.out.println("Block: " + data1);
  		      System.out.println("Destination Server port: " + sendReceivePacket.getPort());
  		      System.out.print("Containing: \n");
- 		      String received = new String(sendReceivePacket.getData()); 
+ 		      String received = new String(sendReceivePacket.getData());
+ 		      byte temp[] = new byte[512];
+		      temp = Arrays.copyOfRange(sendReceivePacket.getData(), 4, 516);
+		      received = new String(temp);
  		      System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + received + "\n");
  		      
  		      try {
  		    	//add all the contents into an array of bytes 
-				storeData.write(data1);
+				storeData.write(temp);
  		      } catch (IOException e1) {
 				e1.printStackTrace();
  		      }
