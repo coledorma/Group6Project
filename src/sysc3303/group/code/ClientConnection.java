@@ -25,6 +25,8 @@ public class ClientConnection implements Runnable {
     byte zero = 0;
     byte fileExistErrCode = 6;
     byte fileNotFoundErrCode = 1;
+    byte accessViolationErrCode = 2;
+    byte diskFullErrCode = 3;
     byte RRQ = 1;
     byte WRQ = 2;
     byte DATA = 3;
@@ -72,9 +74,46 @@ public class ClientConnection implements Runnable {
 		    temp[i] = data[2+i];
 	    	i++;
 	    }
+	    
+	    //Create datagram for sending back error request
+	    DatagramPacket sendPacket1;
+		sendPacket1 = new DatagramPacket(temp, temp.length,
+	    		sendReceivePacket.getAddress(), sendReceivePacket.getPort());
+		
+		//Check if we have read permissions
+		String currDir = System.getProperty("user.dir");
+		File f2 = new File(currDir + "/Database/");
+		Path readPath = f2.toPath();		//create path to database
+		//System.out.println("current directory: " + readPath);
+		
+  		boolean isReadable = Files.isReadable(readPath);		//check database read permissions
+  		
+  		if(!isReadable) {
+  			String errStr = "ERROR: Access violation - read permissions denied.";
+  			System.out.println(errStr);
+  			byte[] errMsg = errStr.getBytes();
+  			byte ackToSend[];
+  			System.out.println("Server: ERROR request created.");
+  			ackToSend = createErrorRequest(zero,ERROR,zero,accessViolationErrCode,errMsg,zero);
+  			sendPacket1 = new DatagramPacket(ackToSend, ackToSend.length, sendReceivePacket.getAddress(), sendReceivePacket.getPort());
+  			
+  			//Sending ERROR request
+  			try {
+  				sendReceiveSocket.send(sendPacket1);
+  				System.out.println("Server: ERROR request sent.");
+  				errorSent = true;
+  			} catch (IOException e) {
+  				e.printStackTrace();
+  				System.exit(1);
+  			}
+  		}
+	    
+	    
 	    /*  ***
 	    file is the filename that the user wants to read
 	    */
+  		
+  	    if(!errorSent) {
 	    String workingDir = System.getProperty("user.dir");
 	    String file = workingDir +"/Database/"+ new String(temp,0,temp.length);
 
@@ -170,11 +209,9 @@ public class ClientConnection implements Runnable {
 		 		e.printStackTrace();
 		 		System.exit(1);
 			}
-  
 		}
-		
-		errorSent = false;
-		       
+  	  }
+		//errorSent = false;       
 	}
 	
 	public void writeRequest() {
@@ -188,9 +225,39 @@ public class ClientConnection implements Runnable {
 	    		sendReceivePacket.getAddress(), sendReceivePacket.getPort());
 		
 		String currDir = System.getProperty("user.dir");
-	      
-		//Check for same file in database, if so, create and send ERROR request
-		File f = new File(currDir + "/Database/" + getTextName(data).trim());
+		
+				//Check for same file in database, if so, create and send ERROR request
+				File f = new File(currDir + "/Database/" + getTextName(data).trim());
+		
+				//Check if we have write permissions
+				File f2 = new File(currDir + "/Database/");
+				Path writePath = f2.toPath();		//create path to database
+				//System.out.println("current directory: " + writePath);
+				
+				boolean isWritable = Files.isWritable(writePath);		//check database write permissions
+				//System.out.println("is writable returns: " + isWritable);
+
+				
+				if(!isWritable) {
+					String errStr = "ERROR: Access violation - write permissions denied.";
+					System.out.println(errStr);
+					byte[] errMsg = errStr.getBytes();
+					byte ackToSend[];
+					System.out.println("Server: ERROR request created.");
+					ackToSend = createErrorRequest(zero,ERROR,zero,accessViolationErrCode,errMsg,zero);
+					sendPacket = new DatagramPacket(ackToSend, ackToSend.length, sendReceivePacket.getAddress(), sendReceivePacket.getPort());
+					
+					//Sending ERROR request
+					try {
+						sendReceiveSocket.send(sendPacket);
+						System.out.println("Server: ERROR request sent.");
+						errorSent = true;
+					} catch (IOException e) {
+						e.printStackTrace();
+						System.exit(1);
+					}
+				}  
+		
 		if (f.exists()) {
 			String errStr = "ERROR: File already exists.";
 			System.out.println(errStr);
@@ -276,7 +343,40 @@ public class ClientConnection implements Runnable {
 				e1.printStackTrace();
  		      }
  		      
- 		      
+ 		     if(lastPacket) {
+			      
+			        String usb = "F:\\";		//checking F drive: usb is connected
+					File f1 = new File(usb);
+					boolean detectUSB = f1.canRead();
+					//System.out.println("detect usb is: " + detectUSB );
+					
+					if(detectUSB) {
+					long checkDisk = f1.getFreeSpace();	//record amount of free space 
+					//System.out.println("free space: " + checkDisk);
+					
+					if(checkDisk < storeData.size()) {	//check if the size of the file to write is greater than available room on USB
+						String errStr = "ERROR: Free space = " + checkDisk + ". Disk is full.";
+						System.out.println(errStr);
+						byte[] errMsg = errStr.getBytes();
+						byte ackToSend[];
+						System.out.println("Server: ERROR request created.");
+						ackToSend = createErrorRequest(zero,ERROR,zero,diskFullErrCode,errMsg,zero);
+						sendPacket = new DatagramPacket(ackToSend, ackToSend.length, sendReceivePacket.getAddress(), sendReceivePacket.getPort());
+						
+						//Sending ERROR request
+						try { 
+							sendReceiveSocket.send(sendPacket);
+							System.out.println("Server: ERROR request sent.");
+							errorSent = true;
+							} catch (IOException e) {
+								e.printStackTrace();
+								System.exit(1);
+							}
+					}
+				}  
+		      }
+ 		     
+ 		     if(!errorSent) {
  		      // Send ACK of DATA to client before waiting to receive next block
  		      byte ackToSend[];
  		      ackToSend = createAckRequest(zero,ACK,blockNumberHolder[0],blockNumberHolder[1]);
@@ -288,9 +388,8 @@ public class ClientConnection implements Runnable {
  		    	  e.printStackTrace();
  		    	  System.exit(1);
  		      }
-
  			  System.out.println("Server: ACK sent.\n"); 
- 		      
+ 		     }
 	      }
 	      
 	      
@@ -301,6 +400,7 @@ public class ClientConnection implements Runnable {
 	    	  String workingDir = System.getProperty("user.dir");
 	      
 	    	  //now write to the file
+	    	  if(errorSent == false) {
 	    	  try {
 	    		  System.out.println("Writing File to Database...");
 	    		  FileOutputStream fout=new FileOutputStream(workingDir + "/Database/" + getTextName(data).trim());
@@ -312,10 +412,9 @@ public class ClientConnection implements Runnable {
 	      			// TODO Auto-generated catch block
 	      			e.printStackTrace();
 	      		}
-	    	  
-	    	  
+	    	  }	  
 		}
-	      errorSent = false;
+	     // errorSent = false;
 	      
 	}
 	
