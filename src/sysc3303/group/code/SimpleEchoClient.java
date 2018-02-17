@@ -290,6 +290,7 @@ public class SimpleEchoClient {
 	 	 				String errStr = "Yout do not have enough space on your disk to read this file.";
 	 	 				isRoom = false;
 	 	 				System.out.println(errStr);
+	 	 				return;
 	 	 			}else {
 	 	 				isRoom = true;
 	 	 			}
