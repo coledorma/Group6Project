@@ -77,12 +77,12 @@ public class SimpleEchoClient {
 					validInput = true;
 				}
 			}while(!validInput);
+			
 
 			System.out.println("Sending write request...");
 
 			//Send write request and receive response
 			sendWriteRequest(filename);
-
 		}
 	   
 	      
@@ -277,9 +277,25 @@ public class SimpleEchoClient {
 	 	    			  e.printStackTrace();
 	 	    		  }
 	 	    	  }
-	 	    	  byte[] blockNumber = {receivePacket.getData()[2], receivePacket.getData()[3]};
+	 	    	byte[] blockNumber = {receivePacket.getData()[2], receivePacket.getData()[3]};
 	 	    	  
-	 	    	  //DataOutputStream outStream = new DataOutputStream(output);
+	 	 	    String usb = "F:\\";		//checking F drive: usb is connected
+	 	 		File f1 = new File(usb);
+	 	 		boolean detectUSB = f1.canRead();
+	 	 		boolean isRoom = true;
+	 	 				
+	 	 		if(detectUSB) {
+	 	 			long checkDisk = f1.getFreeSpace();	//record amount of free space 
+	 	 			if(checkDisk < receivePacket.getLength() - 4) {	//check if the size of the file to read is greater than available room on USB
+	 	 				String errStr = "Yout do not have enough space on your disk to read this file.";
+	 	 				isRoom = false;
+	 	 				System.out.println(errStr);
+	 	 			}else {
+	 	 				isRoom = true;
+	 	 			}
+	 	 		}
+	 	    	  
+	 	 		if(isRoom) {
 	 	    	  try {
 	 	    		  //Writing to local disk
 	 	    		 System.out.println("Writing file to local disk...\n");
@@ -322,7 +338,7 @@ public class SimpleEchoClient {
 	 		      }
 
 	 		      System.out.println("Client: Packet sent.\n");
-	 	    	  
+	 	 		}
 	 	      }
 	 	     
 	 	     //Writing file to local disk
