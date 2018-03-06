@@ -236,7 +236,9 @@ public class SimpleEchoErrorSimulator {
       byte[] secReceivedByteArray = {receivePacket.getData()[0],receivePacket.getData()[1],receivePacket.getData()[2],receivePacket.getData()[3]};
       
       //Check to see if the received packet is the same as the inputed simulation packet
-      isSimPacket = checkIfSimPacket(secReceivedByteArray,packetType, packetNumByteArray);
+      if(runSim) {
+    	  isSimPacket = checkIfSimPacket(receivedByteArray,packetType, packetNumByteArray);  
+      }
       
       if (isSimPacket){
     	  if (lostSim) {
