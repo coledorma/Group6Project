@@ -16,6 +16,7 @@ public class SimpleEchoErrorSimulator {
    DatagramSocket sendReceiveSocket, receiveSocket;
    String packetType = null, packetDelayTime = null;
    Boolean duplicateSim = false, delaySim = false, lostSim = false;
+   Boolean runSim = false;
    byte zero = 0;
    byte RRQ = 1;
    byte WRQ = 2;
@@ -87,7 +88,10 @@ public class SimpleEchoErrorSimulator {
       byte[] receivedByteArray = {receivePacket.getData()[0],receivePacket.getData()[1],receivePacket.getData()[2],receivePacket.getData()[3]};
       
       //Check to see if the received packet is the same as the inputed simulation packet
-      Boolean isSimPacket = checkIfSimPacket(receivedByteArray,packetType, packetNumByteArray);
+      Boolean isSimPacket = false;
+      if(runSim) {
+    	  isSimPacket = checkIfSimPacket(receivedByteArray,packetType, packetNumByteArray);  
+      }
       
       if (isSimPacket){
     	  if (lostSim) {
@@ -335,6 +339,7 @@ public class SimpleEchoErrorSimulator {
 	   //Wait for answer from user for read or write request
 	   if (requestAnswer.equals("Y") || requestAnswer.equals("y")){
 		   //Wait for sim number
+		   runSim = true;
 		   Scanner readSimInput = new Scanner(System.in);
 		   System.out.println("Which of the following would you like to simulate?\n(1) - Lose A Packet\n(2) - Delay A Packet\n(3) - Duplicate A Packet\n ");
 		   String simNum = readSimInput.next(); // Scans the next token of the input as an int.
@@ -373,12 +378,12 @@ public class SimpleEchoErrorSimulator {
 			   if (packetType.equals("DATA") || packetType.equals("ACK")){
 				   //Wait for packet number
 				   Scanner readPacketNum = new Scanner(System.in);
-				   System.out.println("What is the first byte of the block you would like to delay? (1/2/3/etc...)\n");
+				   System.out.println("What is the first of the two bytes of the block number? (ie 0 of 01, 2 of 23)\n");
 				   byte tempFirst = readPacketNum.nextByte(); // Scans the next token of the input as an int.
 				   
 				   //Wait for packet number
 				   Scanner readPacketSecondNum = new Scanner(System.in);
-				   System.out.println("What is the second byte of the block you would like to delay? (1/2/3/etc...)\n");
+				   System.out.println("What is the second of the two bytes of the block number? (ie 1 of 01, 3 of 23)\n");
 				   byte tempSecond = readPacketSecondNum.nextByte(); // Scans the next token of the input as an int.
 				   
 				   packetNumByteArray[0] = tempFirst;
