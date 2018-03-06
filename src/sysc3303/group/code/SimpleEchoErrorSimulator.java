@@ -237,7 +237,7 @@ public class SimpleEchoErrorSimulator {
       
       //Check to see if the received packet is the same as the inputed simulation packet
       if(runSim) {
-    	  isSimPacket = checkIfSimPacket(receivedByteArray,packetType, packetNumByteArray);  
+    	  isSimPacket = checkIfSimPacket(secReceivedByteArray,packetType, packetNumByteArray);  
       }
       
       if (isSimPacket){
@@ -357,12 +357,12 @@ public class SimpleEchoErrorSimulator {
 			   if (packetType.equals("DATA") || packetType.equals("ACK")){
 				   //Wait for packet number
 				   Scanner readPacketNum = new Scanner(System.in);
-				   System.out.println("What is the first byte of the block you would like to lose? (1/2/3/etc...)\n");
+				   System.out.println("What is the first of the two bytes of the block number? (1/2/3/etc... i.e. 1 of 01, 3 of 23)\n");
 				   byte tempFirst = readPacketNum.nextByte(); // Scans the next token of the input as an int.
 				   
 				   //Wait for packet number
 				   Scanner readPacketSecondNum = new Scanner(System.in);
-				   System.out.println("What is the second byte of the block you would like to lose? (1/2/3/etc...)\n");
+				   System.out.println("What is the second of the two bytes of the block number? (1/2/3/etc... i.e. 1 of 01, 3 of 23)\n");
 				   byte tempSecond = readPacketSecondNum.nextByte(); // Scans the next token of the input as an int.
 				   
 				   packetNumByteArray[0] = tempFirst;
@@ -380,12 +380,12 @@ public class SimpleEchoErrorSimulator {
 			   if (packetType.equals("DATA") || packetType.equals("ACK")){
 				   //Wait for packet number
 				   Scanner readPacketNum = new Scanner(System.in);
-				   System.out.println("What is the first of the two bytes of the block number? (ie 0 of 01, 2 of 23)\n");
+				   System.out.println("What is the first of the two bytes of the block number? (1/2/3/etc... i.e. 1 of 01, 3 of 23)\n");
 				   byte tempFirst = readPacketNum.nextByte(); // Scans the next token of the input as an int.
 				   
 				   //Wait for packet number
 				   Scanner readPacketSecondNum = new Scanner(System.in);
-				   System.out.println("What is the second of the two bytes of the block number? (ie 1 of 01, 3 of 23)\n");
+				   System.out.println("What is the second of the two bytes of the block number? (1/2/3/etc... i.e. 1 of 01, 3 of 23)\n");
 				   byte tempSecond = readPacketSecondNum.nextByte(); // Scans the next token of the input as an int.
 				   
 				   packetNumByteArray[0] = tempFirst;
@@ -413,12 +413,12 @@ public class SimpleEchoErrorSimulator {
 			   if (packetType.equals("DATA") || packetType.equals("ACK")){
 				   //Wait for packet number
 				   Scanner readPacketNum = new Scanner(System.in);
-				   System.out.println("What is the first byte of the block you would like to duplicate? (1/2/3/etc...)\n");
+				   System.out.println("What is the first of the two bytes of the block number? (1/2/3/etc... i.e. 1 of 01, 3 of 23)\n");
 				   byte tempFirst = readPacketNum.nextByte(); // Scans the next token of the input as an int.
 				   
 				   //Wait for packet number
 				   Scanner readPacketSecondNum = new Scanner(System.in);
-				   System.out.println("What is the second byte of the block would you like to duplicate? (1/2/3/etc...)\n");
+				   System.out.println("What is the second of the two bytes of the block number? (1/2/3/etc... i.e. 1 of 01, 3 of 23)\n");
 				   byte tempSecond = readPacketSecondNum.nextByte(); // Scans the next token of the input as an int.
 				   
 				   packetNumByteArray[0] = tempFirst;
