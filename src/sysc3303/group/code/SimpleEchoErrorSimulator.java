@@ -112,12 +112,14 @@ public class SimpleEchoErrorSimulator {
       }
       
       // Slow things down (wait 5 seconds)
-      try {
+    /*  try {
           Thread.sleep(5000);
       } catch (InterruptedException e ) {
           e.printStackTrace();
           System.exit(1);
-      }
+      } 
+      */
+      
       /*//Check if this is a new RRQ/WRQ and forwards message to the listener port for the server
         byte zero = 0;
 	    byte one = 1;

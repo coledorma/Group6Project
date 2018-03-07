@@ -207,11 +207,10 @@ public class ClientConnection implements Runnable {
 					// Once block of data has been sent, wait for ACK from client before sending another block
 					try {
 						System.out.println("WAITING FOR ACK");
-						sendReceiveSocket.setSoTimeout(15000);
+						sendReceiveSocket.setSoTimeout(30000);
 						sendReceiveSocket.receive(receivePacket);
 						System.out.println("ACK Received!");
-						ackReceived = checkAck(receivePacket, blockNumber);
-						break;
+						ackReceived = checkAckData(receivePacket, blockNumber);
 					} catch (SocketTimeoutException timeoutEx){ 
 //						timeoutEx.printStackTrace();
 						/*if we want to limit the amount of resends, we can add a tracker var (resent) 
@@ -242,17 +241,17 @@ public class ClientConnection implements Runnable {
 		}
 		//errorSent = false;       
 	}
-	public boolean checkAck(DatagramPacket packet, byte[] blkNum)
+	public boolean checkAckData(DatagramPacket packet, byte[] blkNum)
 	{
-		//check for valid 04xx format
-		if ((packet.getData()[0] == zero) && (packet.getData()[1] == ACK)) { //valid 04xx Ack
+		//check for valid 04xx / 03xx format
+		if ((packet.getData()[0] == zero) && ((packet.getData()[1] == ACK) || (packet.getData()[1] == DATA))) { //valid 04xx Ack
 			//check if it's for the right block of Data
 			if ((packet.getData()[2] == blkNum[0]) && (packet.getData()[3] == blkNum[1])) 
-			{ //valid block# for the Data block that was just sent
+			{ //valid block# for the ACK/DATA block that was just sent
 				return true;  
-			}else //it's a valid Ack, but likely a duplicate so discard/false
+			}else //it's a valid ACK/DATA, but likely a duplicate so discard/false
 				return false;
-		}else  //not a valid 04xx Ack
+		}else  //not a valid 03xx/04xx packet
 			return false;
 	}
 	public byte[] incrementBN(byte[] blkNum){
@@ -351,39 +350,38 @@ public class ClientConnection implements Runnable {
 				System.exit(1);
 			}
 
-			try {
+		/*	try {
 				Thread.sleep(5000);
 			} catch (InterruptedException e ) {
 				e.printStackTrace();
 				System.exit(1);
 			}
-
-			byte[] blockNumberHolder = null;
-
+	*/
+			byte[] blockNumber = {zero, zero};  //zeroize blockNumber for new DATA transfer 			
+			
 			ByteArrayOutputStream storeData = new ByteArrayOutputStream();
 			int mode = 0;
 			while(!lastPacket) {
 				// Now was for first block of file to be sent
 				byte data1[] = new byte[516];
 				sendReceivePacket = new DatagramPacket(data1, data1.length);
+				blockNumber = incrementBN(blockNumber); 
 				System.out.println("Server: Waiting for DATA.\n");
-				byte[] blockNumber = {sendReceivePacket.getData()[2], sendReceivePacket.getData()[3]};
-				blockNumberHolder = blockNumber;
-				boolean ackLost = false;
+				boolean dataReceived = false;
 				
-				while(!ackLost) {
+				while(!dataReceived) {
 				      try {        
-				    	 sendReceiveSocket.setSoTimeout(15000);
+				    	 sendReceiveSocket.setSoTimeout(30000);
 				         System.out.println("Waiting for file"); 
 				         sendReceiveSocket.receive(sendReceivePacket);
 				         System.out.println("Packet Received");
-				         ackLost = true;
+				         dataReceived = checkAckData(sendReceivePacket, blockNumber);
 				      } catch (SocketTimeoutException ste) {
 							 //This is where u should recent the datagram
 							 System.out.println("Caught");
 							 try {
 								 System.out.println("Resending Packet!");
-								sendReceiveSocket.send(sendPacket);
+								 sendReceiveSocket.send(sendPacket);
 							} catch (IOException e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();

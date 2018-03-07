@@ -195,44 +195,46 @@ public class SimpleEchoClient {
 		File newReadFile = new File(filename);
 		FileOutputStream receivedFile = null;
 
+		byte[] blockNumber = {zero, zero};  //zeroize blockNumber for new DATA transfer 			
 		boolean overwrite = false;
 		int mode = 0;
 		//   ByteArrayOutputStream storeData = new ByteArrayOutputStream();
 		while (!lastPacket) {
-			boolean lost = false;
-			   long start = 0;
-			   final long end;
-			   
-			   while(!lost) {
+			boolean dataReceived = false;
+			long start = 0;
+			final long end;
+			blockNumber = incrementBN(blockNumber); 
+			
+			while(!dataReceived) {
 				try {
-				   // Block until a datagram is received via sendReceiveSocket.
-				   System.out.println("Starting timer:");
-				   start = System.currentTimeMillis();
-				   sendReceiveSocket.setSoTimeout(35000);
-				   sendReceiveSocket.receive(receivePacket);
-				   lost = true;
-				   System.out.println("Client: Packet received:");
-				   block++;
-				   
-				 }catch (SocketTimeoutException ste) {
-					 //This is where u should recent the datagram
-					 System.out.println("Caught");
-					 try {
-						 System.out.println("Resending Packet!");
+					// Block until a datagram is received via sendReceiveSocket.
+					System.out.println("Waiting for Data:");
+					start = System.currentTimeMillis();
+					sendReceiveSocket.setSoTimeout(35000);
+					sendReceiveSocket.receive(receivePacket);
+					dataReceived = checkAckData(receivePacket, blockNumber);
+
+				}catch (SocketTimeoutException ste) {
+					//This is where u should recent the datagram
+					System.out.println("Caught, timed out.");
+					try {
+						System.out.println("Resending Packet!");
 						sendReceiveSocket.send(sendPacket);
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-					 
-				 }catch (IOException e) {
-						   e.printStackTrace();
-						   System.exit(1);
-				 }
-			   }
-			   
-			   end = System.currentTimeMillis();
-			   System.out.println("The program was running: " + (end-start) + "ms.");
+
+				}catch (IOException e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
+			}
+
+			System.out.println("Client: Packet received:");
+			block++;
+			end = System.currentTimeMillis();
+			System.out.println("The program was running: " + (end-start) + "ms.");
 
 			// Process the received datagram.
 
@@ -303,8 +305,9 @@ public class SimpleEchoClient {
 						e.printStackTrace();
 					}
 				}
-				byte[] blockNumber = {receivePacket.getData()[2], receivePacket.getData()[3]};
-
+				blockNumber[0] = receivePacket.getData()[2];
+				blockNumber[1] = receivePacket.getData()[3];
+				
 				String usb = "F:\\";		//checking F drive: usb is connected
 				File f1 = new File(usb);
 				boolean detectUSB = f1.canRead();
@@ -357,16 +360,16 @@ public class SimpleEchoClient {
 
 					//-----------SENDING ACK REQUEST----------------
 					// Send the datagram packet to the server via the send/receive socket. 
-//		 		     if(mode != 2) {
-		 		      try {
-		 		         sendReceiveSocket.send(sendPacket);
-		 		      } catch (IOException e) {
-		 		         e.printStackTrace();
-		 		         System.exit(1);
-		 		      }
+					//		 		     if(mode != 2) {
+					try {
+						sendReceiveSocket.send(sendPacket);
+					} catch (IOException e) {
+						e.printStackTrace();
+						System.exit(1);
+					}
 
-		 		      System.out.println("Client: Packet sent.\n");
-//		 	 		}
+					System.out.println("Client: Packet sent.\n");
+					//		 	 		}
 				}
 			}
 
@@ -379,7 +382,7 @@ public class SimpleEchoClient {
 	 			e.printStackTrace();
 	 	     }*/
 			System.out.println("Mode: " + mode);
-	 	    mode++;
+			mode++;
 		}
 	}
 
@@ -468,7 +471,7 @@ public class SimpleEchoClient {
 		System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form: " + received + "\n");
 
 		byte[] blockNumber = {zero, zero};  //zeroize blockNumber for new DATA transfer 
-		
+
 		//Check to see if ERROR request received
 		if (receivePacket.getData()[1] == 5) {
 			errorReceived = true;
@@ -516,16 +519,16 @@ public class SimpleEchoClient {
 			//-----------SENDING REQUEST----------------
 			// Send the datagram packet to the server via the send/receive socket.
 
-//		      if(mode!=2) {
-		      try {
-		         sendReceiveSocket.send(sendPacket);
-		      } catch (IOException e) {
-		         e.printStackTrace();
-		         System.exit(1);
-		      }
+			//		      if(mode!=2) {
+			try {
+				sendReceiveSocket.send(sendPacket);
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
 
-		      System.out.println("Client: Packet sent.\n"); 
-//		      }
+			System.out.println("Client: Packet sent.\n"); 
+			//		      }
 
 
 			count = count+512;
@@ -538,12 +541,12 @@ public class SimpleEchoClient {
 				try {
 					// Block until a datagram is received via sendReceiveSocket.
 					System.out.println("Waiting for ACK.");
-					sendReceiveSocket.setSoTimeout(15000);
+					sendReceiveSocket.setSoTimeout(30000);
 					sendReceiveSocket.receive(receivePacket);
-					ackReceived = checkAck(receivePacket, blockNumber);
+					ackReceived = checkAckData(receivePacket, blockNumber);
 
 				} catch (SocketTimeoutException timeoutEx){ 
-//					timeoutEx.printStackTrace();
+					//					timeoutEx.printStackTrace();
 					/*if we want to limit the amount of resends, we can add a tracker var (resent) 
 						  and exit if we've already resent a packet */
 					if (resent) {
@@ -580,25 +583,25 @@ public class SimpleEchoClient {
 
 				}
 			}
-			
+
 			block++;
-	 	      
-	 	    mode++;
+
+			mode++;
 		}
 		errorReceived = false;
 	}
 
-	public boolean checkAck(DatagramPacket packet, byte[] blkNum)
+	public boolean checkAckData(DatagramPacket packet, byte[] blkNum)
 	{
-		//check for valid 04xx format
-		if ((packet.getData()[0] == zero) && (packet.getData()[1] == ACK)) { //valid 04xx Ack
+		//check for valid 04xx / 03xx format
+		if ((packet.getData()[0] == zero) && ((packet.getData()[1] == ACK) || (packet.getData()[1] == DATA))) { //valid 04xx Ack
 			//check if it's for the right block of Data
 			if ((packet.getData()[2] == blkNum[0]) && (packet.getData()[3] == blkNum[1])) 
-			{ //valid block# for the Data block that was just sent
+			{ //valid block# for the ACK/DATA block that was just sent
 				return true;  
-			}else //it's a valid Ack, but likely a duplicate so discard/false
+			}else //it's a valid ACK/DATA, but likely a duplicate so discard/false
 				return false;
-		}else  //not a valid 04xx Ack
+		}else  //not a valid 03xx/04xx packet
 			return false;
 	}
 	public byte[] incrementBN(byte[] blkNum){
