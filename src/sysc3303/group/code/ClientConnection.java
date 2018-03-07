@@ -157,7 +157,7 @@ public class ClientConnection implements Runnable {
 			receivePacket = new DatagramPacket(data, data.length);  
 			// int check = 0;
 			byte[] blockNumber = {zero, zero};  //zeroize blockNumber for new DATA transfer 
-
+			int mode = 0;
 			// While there is still data to send (ie the packet is not the last block), keep sending data and then waiting for ACK
 			while (!lastPacket && !errorSent) {
 				ByteArrayOutputStream output = new ByteArrayOutputStream();  
@@ -186,14 +186,16 @@ public class ClientConnection implements Runnable {
 
 
 
-				try {
-					sendReceiveSocket.send(sendReceivePacket);
-				} catch (IOException e) {
-					e.printStackTrace();
-					System.exit(1);
-				}
+//		 		if(mode != 0) {
+		 		try {
+		 		    sendReceiveSocket.send(sendReceivePacket);
+		 		} catch (IOException e) {
+		 		    e.printStackTrace();
+		 		    System.exit(1);
+		 		}
 
-				System.out.println("Server: Block of DATA sent.\n"); 
+		 		 System.out.println("Server: Block of DATA sent.\n"); 
+//		 	}
 				
 				count = count+512;	  
 
@@ -207,16 +209,18 @@ public class ClientConnection implements Runnable {
 						System.out.println("WAITING FOR ACK");
 						sendReceiveSocket.setSoTimeout(15000);
 						sendReceiveSocket.receive(receivePacket);
+						System.out.println("ACK Received!");
 						ackReceived = checkAck(receivePacket, blockNumber);
+						break;
 					} catch (SocketTimeoutException timeoutEx){ 
-						timeoutEx.printStackTrace();
+//						timeoutEx.printStackTrace();
 						/*if we want to limit the amount of resends, we can add a tracker var (resent) 
 						  and exit if we've already resent a packet */
 						if (resent) {
 							System.out.println("Socket timed out twice, exiting.");
 							System.exit(1);
 						} 
-
+						System.out.println("Caught");
 						//resend and go through while loop again for waiting on Ack
 						System.out.println("Socket timed out, resending Data packet.");
 						try {
@@ -232,9 +236,8 @@ public class ClientConnection implements Runnable {
 						System.exit(1);
 					} 
 				}
-
-				System.out.println("ACK Received!");
 				block++;
+				mode++;
 			}
 		}
 		//errorSent = false;       
@@ -358,7 +361,7 @@ public class ClientConnection implements Runnable {
 			byte[] blockNumberHolder = null;
 
 			ByteArrayOutputStream storeData = new ByteArrayOutputStream();
-
+			int mode = 0;
 			while(!lastPacket) {
 				// Now was for first block of file to be sent
 				byte data1[] = new byte[516];
@@ -366,26 +369,33 @@ public class ClientConnection implements Runnable {
 				System.out.println("Server: Waiting for DATA.\n");
 				byte[] blockNumber = {sendReceivePacket.getData()[2], sendReceivePacket.getData()[3]};
 				blockNumberHolder = blockNumber;
-
-				try {        
-					System.out.println("Waiting for file"); 
-					sendReceiveSocket.setSoTimeout(15000);
-					sendReceiveSocket.receive(sendReceivePacket);
-				} catch (SocketTimeoutException toe) {
-					System.out.println("Socket timed out. Resending Ack.\n");
-					try {
-						sendReceiveSocket.send(sendPacket);
-					} catch (IOException e) {
-						e.printStackTrace();
-						System.exit(1);
-					}
-					System.out.println("Server: ACK sent.\n"); 
-				} catch (IOException e) {
-					System.out.print("IO Exception: likely:");
-					System.out.println("Receive Socket Timed Out.\n" + e);
-					e.printStackTrace();
-					System.exit(1);
-				}
+				boolean ackLost = false;
+				
+				while(!ackLost) {
+				      try {        
+				    	 sendReceiveSocket.setSoTimeout(20000);
+				         System.out.println("Waiting for file"); 
+				         sendReceiveSocket.receive(sendReceivePacket);
+				         System.out.println("Packet Received");
+				         ackLost = true;
+				      } catch (SocketTimeoutException ste) {
+							 //This is where u should recent the datagram
+							 System.out.println("Caught");
+							 try {
+								 System.out.println("Resending Packet!");
+								sendReceiveSocket.send(sendPacket);
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+					 	} catch (IOException e) {
+				         System.out.print("IO Exception: likely:");
+				         System.out.println("Receive Socket Timed Out.\n" + e);
+				         e.printStackTrace();
+				         System.exit(1);
+				      }
+			      
+			      }
 
 				// If block size is under 516 it is the last block of data to receive
 				int len = sendReceivePacket.getLength();
@@ -451,14 +461,17 @@ public class ClientConnection implements Runnable {
 					ackToSend = createAckRequest(zero,ACK,sendReceivePacket.getData()[2],sendReceivePacket.getData()[3]);
 					sendPacket = new DatagramPacket(ackToSend, ackToSend.length, sendReceivePacket.getAddress(), sendReceivePacket.getPort());
 
-					try {
-						sendReceiveSocket.send(sendPacket);
-					} catch (IOException e) {
-						e.printStackTrace();
-						System.exit(1);
-					}
-					System.out.println("Server: ACK sent.\n"); 
-				}
+//		 		   	if(mode != 0) {
+		 		      try {
+		 		    	  sendReceiveSocket.send(sendPacket);
+		 		      } catch (IOException e) {
+		 		    	  e.printStackTrace();
+		 		    	  System.exit(1);
+		 		      }
+		 			  System.out.println("Server: ACK sent.\n"); 
+//		 			}
+		 		}
+				mode++;
 			}
 
 
