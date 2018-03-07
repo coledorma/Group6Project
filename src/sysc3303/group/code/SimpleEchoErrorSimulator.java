@@ -109,6 +109,8 @@ public class SimpleEchoErrorSimulator {
     	          System.exit(1);
     	      }
     	  }
+    	  runSim = false;
+    	  isSimPacket = false;
       }
       
       // Slow things down (wait 5 seconds)
@@ -201,6 +203,8 @@ public class SimpleEchoErrorSimulator {
 
     		  System.out.println("Intermediate Host: Duplicate packet sent");
     	  }
+    	  runSim = false;
+    	  isSimPacket = false;
       }
       
       
@@ -258,6 +262,8 @@ public class SimpleEchoErrorSimulator {
     	          System.exit(1);
     	      }
     	  }
+    	  runSim = false;
+    	  isSimPacket = false;
       }
       
       
@@ -322,6 +328,8 @@ public class SimpleEchoErrorSimulator {
 
     		  System.out.println("Intermediate Host: Duplicate packet sent");
     	  }
+    	  runSim = false;
+    	  isSimPacket = false;
       }
       
       /*// Slow things down (wait 5 seconds)
