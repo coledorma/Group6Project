@@ -373,7 +373,7 @@ public class ClientConnection implements Runnable {
 				
 				while(!ackLost) {
 				      try {        
-				    	 sendReceiveSocket.setSoTimeout(20000);
+				    	 sendReceiveSocket.setSoTimeout(15000);
 				         System.out.println("Waiting for file"); 
 				         sendReceiveSocket.receive(sendReceivePacket);
 				         System.out.println("Packet Received");

@@ -516,7 +516,7 @@ public class SimpleEchoClient {
 			//-----------SENDING REQUEST----------------
 			// Send the datagram packet to the server via the send/receive socket.
 
-		      if(mode!=0) {
+		      if(mode!=2) {
 		      try {
 		         sendReceiveSocket.send(sendPacket);
 		      } catch (IOException e) {
@@ -533,94 +533,55 @@ public class SimpleEchoClient {
 
 			boolean resent = false; //tracker for if we have already resent the Data packet for this block
 			boolean ackReceived = false;
-			long start = 0;
-			boolean lost = false;
-//			while(!ackReceived) {
-//				try {
-//					// Block until a datagram is received via sendReceiveSocket.
-//					System.out.println("Starting timer:");
-//					start = System.currentTimeMillis();
-//					System.out.println("Waiting for ACK.");
-//					sendReceiveSocket.setSoTimeout(30000);
-//					sendReceiveSocket.receive(receivePacket);
-//					ackReceived = checkAck(receivePacket, blockNumber);
-//				} catch (SocketTimeoutException timeoutEx){ 
+
+			while(!ackReceived) {
+				try {
+					// Block until a datagram is received via sendReceiveSocket.
+					System.out.println("Waiting for ACK.");
+					sendReceiveSocket.setSoTimeout(15000);
+					sendReceiveSocket.receive(receivePacket);
+					ackReceived = checkAck(receivePacket, blockNumber);
+
+				} catch (SocketTimeoutException timeoutEx){ 
 //					timeoutEx.printStackTrace();
-//					/*if we want to limit the amount of resends, we can add a tracker var (resent) 
-//						  and exit if we've already resent a packet */
-//					if (resent) {
-//						System.out.println("Socket timed out twice, exiting.");
-//						System.exit(1);
-//					} 
-//
-//					//resend and go through while loop again for waiting on Ack
-//					System.out.println("Socket timed out, resending Data packet.");
-//					try {
-//						sendReceiveSocket.send(sendPacket);
-//					} catch (IOException e) {
-//						e.printStackTrace();
-//						System.exit(1);
-//					}
-//					//uncomment if we want to limit amount of timeouts allowed 
-//					resent = true;
-//				} catch(IOException e) {
-//					e.printStackTrace();
-//					System.exit(1);
-//				}
-//
-//				if (ackReceived) {
-//					// Process the received datagram.
-//					System.out.println("Client: Ack received:");
-//					System.out.println("From Server: " + receivePacket.getAddress());
-//					System.out.println("Server port: " + receivePacket.getPort());
-//					len = receivePacket.getLength();
-//					System.out.println("Length: " + len);
-//					System.out.print("Containing: \n");
-//					// Form a String from the byte array.
-//					received = new String(receivePacket.getData());   
-//					System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form:" + received + "\n");
-//
-//				}
-//			}
-			while(!lost) {
-		    	 try {
-					   // Block until a datagram is received via sendReceiveSocket.
-					   System.out.println("Starting timer:");
-					  start = System.currentTimeMillis();
-					   sendReceiveSocket.setSoTimeout(20000);
-					   sendReceiveSocket.receive(receivePacket);
-					   lost = true;
-					   System.out.println("Client: Packet received:");
-					   block++;
-					 }catch (SocketTimeoutException ste) {
-						 //This is where u should recent the datagram
-						 System.out.println("Caught");
-						 try {
-							 System.out.println("Resending Packet!");
-							sendReceiveSocket.send(sendPacket);
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						 
-					 }catch (IOException e) {
-							   e.printStackTrace();
-							   System.exit(1);
-					 }
-		      }
-		      long end = System.currentTimeMillis();
-			  System.out.println("The program was running: " + (end-start) + "ms.");
-			  
-			  System.out.println("From Server: " + receivePacket.getAddress());
-	 	      System.out.println("Server port: " + receivePacket.getPort());
-	 	      len = receivePacket.getLength();
-	 	      System.out.println("Length: " + len);
-	 	      System.out.print("Containing: \n");
-	 	      // Form a String from the byte array.
-	 	      received = new String(receivePacket.getData());   
-	 	      System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form:" + received + "\n");
+					/*if we want to limit the amount of resends, we can add a tracker var (resent) 
+						  and exit if we've already resent a packet */
+					if (resent) {
+						System.out.println("Socket timed out twice, exiting.");
+						System.exit(1);
+					} 
+					System.out.println("Caught");
+					//resend and go through while loop again for waiting on Ack
+					System.out.println("Socket timed out, resending Data packet.");
+					try {
+						sendReceiveSocket.send(sendPacket);
+						System.out.println("Data is now sent");
+					} catch (IOException e) {
+						e.printStackTrace();
+						System.exit(1);
+					}
+					//uncomment if we want to limit amount of timeouts allowed 
+					resent = true;
+				} catch(IOException e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
+				if (ackReceived) {
+					// Process the received datagram.
+					System.out.println("Client: Ack received:");
+					System.out.println("From Server: " + receivePacket.getAddress());
+					System.out.println("Server port: " + receivePacket.getPort());
+					len = receivePacket.getLength();
+					System.out.println("Length: " + len);
+					System.out.print("Containing: \n");
+					// Form a String from the byte array.
+					received = new String(receivePacket.getData());   
+					System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form:" + received + "\n");
+
+				}
+			}
 			
-//			block++;
+			block++;
 	 	      
 	 	    mode++;
 		}
