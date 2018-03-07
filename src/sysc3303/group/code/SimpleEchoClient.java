@@ -516,7 +516,7 @@ public class SimpleEchoClient {
 			//-----------SENDING REQUEST----------------
 			// Send the datagram packet to the server via the send/receive socket.
 
-		      if(mode!=2) {
+//		      if(mode!=2) {
 		      try {
 		         sendReceiveSocket.send(sendPacket);
 		      } catch (IOException e) {
@@ -525,7 +525,7 @@ public class SimpleEchoClient {
 		      }
 
 		      System.out.println("Client: Packet sent.\n"); 
-		      }
+//		      }
 
 
 			count = count+512;
