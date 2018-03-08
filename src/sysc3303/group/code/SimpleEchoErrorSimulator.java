@@ -50,9 +50,12 @@ public class SimpleEchoErrorSimulator {
 
    public void receiveAndEcho()
    {
+	   
+	   //for duplicate packet thread
+	   Thread thread = null;
+
       // Construct a DatagramPacket for receiving packets up 
       // to 100 bytes long (the length of the byte array).
-      
 
       byte data[] = new byte[516];
       receivePacket = new DatagramPacket(data, data.length);
@@ -109,8 +112,8 @@ public class SimpleEchoErrorSimulator {
     	          System.exit(1);
     	      }
     	  }
-    	  runSim = false;
-    	  isSimPacket = false;
+    	  //runSim = false;
+    	  //isSimPacket = false;
       }
       
       // Slow things down (wait 5 seconds)
@@ -164,47 +167,24 @@ public class SimpleEchoErrorSimulator {
     	  if (duplicateSim){
     		  System.out.println("This packet equals the simulation entered packet.");
     		  
-    		  // Duplicate packet implementation
-    		  
-    		  //Wait the inputed simulation amount of time entered
-    		  System.out.println("Waiting " + packetDelayTime + " milliseconds until duplicate packet being sent...");
-    	      try {
-    	          Thread.sleep(Integer.parseInt(packetDelayTime));
-    	      } catch (InterruptedException e ) {
-    	          e.printStackTrace();
-    	          System.exit(1);
-    	      }
-    		  
-    	      if (ccPort == 0) {
+    		 //create datagram with packet information, length, address, and port number
+    		  if (ccPort == 0) {
     	          sendPacket = new DatagramPacket(data, receivePacket.getLength(),
     	                   receivePacket.getAddress(), 6969);
     	       } else {
     	         sendPacket = new DatagramPacket(data, receivePacket.getLength(),
     	                   receivePacket.getAddress(), ccPort);
     	       }
-    	       
-
-    	       System.out.println( "Intermediate Host: Sending duplicate packet");
-    	       System.out.println("To server: " + sendPacket.getAddress());
-    	       System.out.println("Destination server port: " + sendPacket.getPort());
-    	       len = sendPacket.getLength();
-    	       System.out.println("Length: " + len);
-    	       System.out.print("Containing: ");
-    	       received = new String(sendPacket.getData());  
-    	       System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + received + "\n");
-    	         
-    	       // Send the datagram packet to the client via the send socket. 
-    	       try {
-    	          sendReceiveSocket.send(sendPacket);
-    	       } catch (IOException e) {
-    	          e.printStackTrace();
-    	          System.exit(1);
-    	       }
-
-    		  System.out.println("Intermediate Host: Duplicate packet sent");
+   		  
+   		 // Duplicate packet implementation
+   		 System.out.println("Creating new Duplicate Packet Connection Thread...");
+   		 
+   		 //create Duplicate packet connection thread, and pass it datagram information and time delay 
+   		 thread = new Thread(new DuplicateConnection(sendPacket, packetDelayTime));
+  	  	 thread.start();
     	  }
-    	  runSim = false;
-    	  isSimPacket = false;
+    	 // runSim = false;
+    	  //isSimPacket = false;
       }
       
       
@@ -262,8 +242,8 @@ public class SimpleEchoErrorSimulator {
     	          System.exit(1);
     	      }
     	  }
-    	  runSim = false;
-    	  isSimPacket = false;
+    	  //runSim = false;
+    	  //isSimPacket = false;
       }
       
       
@@ -295,41 +275,19 @@ public class SimpleEchoErrorSimulator {
     	  if (duplicateSim){
     		  System.out.println("This packet equals the simulation entered packet.");
     		  
-    		  // Duplicate packet implementation
-    		  
-    		  //Wait the inputed simulation amount of time entered
-    		  System.out.println("Waiting " + Integer.parseInt(packetDelayTime) + " milliseconds until duplicate packet being sent...");
-    	      try {
-    	          Thread.sleep(Integer.parseInt(packetDelayTime));
-    	      } catch (InterruptedException e ) {
-    	          e.printStackTrace();
-    	          System.exit(1);
-    	      }
-    		  
+    		 //create datagram with packet information, length, address, and port number
     		  sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),
                       clientAddress, clientPort);
-
-    		  System.out.println( "Intermediate Host: Sending duplicate packet");
-    		  System.out.println("To client: " + sendPacket.getAddress());
-    		  System.out.println("Destination client port: " + sendPacket.getPort());
-    		  len = sendPacket.getLength();
-    		  System.out.println("Length: " + len);
-    		  System.out.print("Containing: ");
-    		  received = new String(sendPacket.getData());
-    		  System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + sendPacket.getData()[0] + sendPacket.getData()[1] + sendPacket.getData()[2] + sendPacket.getData()[3] + "\n");
-	
-    		  // Send the duplicate datagram packet to the client via the send socket. 
-    		  try {
-    			  sendReceiveSocket.send(sendPacket);
-    		  } catch (IOException e) {
-    			  e.printStackTrace();
-    			  System.exit(1);
-    		  }
-
-    		  System.out.println("Intermediate Host: Duplicate packet sent");
+   		  
+	   		 // Duplicate packet implementation
+	   		 System.out.println("Creating new Duplicate Packet Connection Thread...");
+	   		 
+	   		 //create Duplicate packet connection thread, and pass it datagram information and time delay 
+	   		 thread = new Thread(new DuplicateConnection(sendPacket, packetDelayTime));
+	  	  	 thread.start();
     	  }
-    	  runSim = false;
-    	  isSimPacket = false;
+    	 // runSim = false;
+    	 // isSimPacket = false;
       }
       
       /*// Slow things down (wait 5 seconds)
@@ -423,17 +381,15 @@ public class SimpleEchoErrorSimulator {
 			   if (packetType.equals("DATA") || packetType.equals("ACK")){
 				   //Wait for packet number
 				   Scanner readPacketNum = new Scanner(System.in);
-				   System.out.println("What is the first of the two bytes of the block number? (1/2/3/etc... i.e. 1 of 01, 3 of 23)\n");
+				   System.out.println("What is the first of the two bytes of the block number? (1/2/3/etc... i.e. 0 of 01, 2 of 23)\n");
 				   byte tempFirst = readPacketNum.nextByte(); // Scans the next token of the input as an int.
-				   
 				   //Wait for packet number
 				   Scanner readPacketSecondNum = new Scanner(System.in);
 				   System.out.println("What is the second of the two bytes of the block number? (1/2/3/etc... i.e. 1 of 01, 3 of 23)\n");
 				   byte tempSecond = readPacketSecondNum.nextByte(); // Scans the next token of the input as an int.
-				   
 				   packetNumByteArray[0] = tempFirst;
 				   packetNumByteArray[1] = tempSecond;
-				   
+		   
 				   //Wait for delay time
 				   Scanner readPacketDelay = new Scanner(System.in);
 				   System.out.println("How long would you like to wait (in milliseconds) in between duplicate packets? (1000/50/etc)\n");
@@ -449,13 +405,14 @@ public class SimpleEchoErrorSimulator {
 	   }
    }
    
-   
+  
    //Check to see if received packet information is same as inputed simulation information
    public Boolean checkIfSimPacket(byte[] receivedPacketData, String packetType, byte[] packetNumByteArray) {
 	   byte[] blockNumber = null;
 	   if (packetNumByteArray != null){
 		   blockNumber = packetNumByteArray;
 	   }
+	  
 	   byte[] receivedPacketType = {receivedPacketData[0],receivedPacketData[1]};
 	   byte[] receivedBlockNumber = {receivedPacketData[2],receivedPacketData[3]};
 	   
