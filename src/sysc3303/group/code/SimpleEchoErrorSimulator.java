@@ -109,6 +109,33 @@ public class SimpleEchoErrorSimulator {
     		  System.out.println("Delaying " + Integer.parseInt(packetDelayTime) + " milliseconds until packet being sent...");
     	      try {
     	          Thread.sleep(Integer.parseInt(packetDelayTime));
+    	          if (ccPort == 0) {
+    	              sendPacket = new DatagramPacket(data, receivePacket.getLength(),
+    	                       receivePacket.getAddress(), 6969);
+    	           } else {
+    	             sendPacket = new DatagramPacket(data, receivePacket.getLength(),
+    	                       receivePacket.getAddress(), ccPort);
+    	           }
+    	           
+
+    	           System.out.println( "Intermediate Host: Sending packet");
+    	           System.out.println("To server: " + sendPacket.getAddress());
+    	           System.out.println("Destination server port: " + sendPacket.getPort());
+    	           len = sendPacket.getLength();
+    	           System.out.println("Length: " + len);
+    	           System.out.print("Containing: ");
+    	           received = new String(sendPacket.getData());  
+    	           System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + receivePacket.getData()[0] + receivePacket.getData()[1] + receivePacket.getData()[2] + receivePacket.getData()[3] + "\n");
+    	           System.out.println("DATA: "+ new String(data));
+    	             
+    	           // Send the datagram packet to the client via the send socket. 
+    	           try {
+    	              sendReceiveSocket.send(sendPacket);
+    	           } catch (IOException e) {
+    	              e.printStackTrace();
+    	              System.exit(1);
+    	           }
+    	           System.out.println("Intermediate Host: packet sent");
     	      } catch (InterruptedException e ) {
     	          e.printStackTrace();
     	          System.exit(1);
@@ -116,6 +143,34 @@ public class SimpleEchoErrorSimulator {
     	  }
     	  //runSim = false;
     	  //isSimPacket = false;
+      } else {
+          if (ccPort == 0) {
+              sendPacket = new DatagramPacket(data, receivePacket.getLength(),
+                       receivePacket.getAddress(), 6969);
+           } else {
+             sendPacket = new DatagramPacket(data, receivePacket.getLength(),
+                       receivePacket.getAddress(), ccPort);
+           }
+           
+
+           System.out.println( "Intermediate Host: Sending packet");
+           System.out.println("To server: " + sendPacket.getAddress());
+           System.out.println("Destination server port: " + sendPacket.getPort());
+           len = sendPacket.getLength();
+           System.out.println("Length: " + len);
+           System.out.print("Containing: ");
+           received = new String(sendPacket.getData());  
+           System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + receivePacket.getData()[0] + receivePacket.getData()[1] + receivePacket.getData()[2] + receivePacket.getData()[3] + "\n");
+           System.out.println("DATA: "+ new String(data));
+             
+           // Send the datagram packet to the client via the send socket. 
+           try {
+              sendReceiveSocket.send(sendPacket);
+           } catch (IOException e) {
+              e.printStackTrace();
+              System.exit(1);
+           }
+           System.out.println("Intermediate Host: packet sent");
       }
       
       // Slow things down (wait 5 seconds)
@@ -136,34 +191,9 @@ public class SimpleEchoErrorSimulator {
 	    }
        */
 
-      if (ccPort == 0) {
-         sendPacket = new DatagramPacket(data, receivePacket.getLength(),
-                  receivePacket.getAddress(), 6969);
-      } else {
-        sendPacket = new DatagramPacket(data, receivePacket.getLength(),
-                  receivePacket.getAddress(), ccPort);
-      }
+
+
       
-
-      System.out.println( "Intermediate Host: Sending packet");
-      System.out.println("To server: " + sendPacket.getAddress());
-      System.out.println("Destination server port: " + sendPacket.getPort());
-      len = sendPacket.getLength();
-      System.out.println("Length: " + len);
-      System.out.print("Containing: ");
-      received = new String(sendPacket.getData());  
-      System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + receivePacket.getData()[0] + receivePacket.getData()[1] + receivePacket.getData()[2] + receivePacket.getData()[3] + "\n");
-      System.out.println("DATA: "+ new String(data));
-        
-      // Send the datagram packet to the client via the send socket. 
-      try {
-         sendReceiveSocket.send(sendPacket);
-      } catch (IOException e) {
-         e.printStackTrace();
-         System.exit(1);
-      }
-
-      System.out.println("Intermediate Host: packet sent");
       
       if(isSimPacket){
     	  if (duplicateSim){
@@ -186,8 +216,6 @@ public class SimpleEchoErrorSimulator {
    		 thread = new Thread(new DuplicateConnection(sendPacket, packetDelayTime));
   	  	 thread.start();
     	  }
-    	 // runSim = false;
-    	  //isSimPacket = false;
       }
       
       
@@ -231,15 +259,40 @@ public class SimpleEchoErrorSimulator {
       
       if (isSimPacket){
     	  if (lostSim) {
+    		  runSim = false;
     		  System.out.println("This packet equals the simulation entered packet.");
     		  //TODO: Lose packet implementation
     	  } else if (delaySim) {
+    		  runSim = false;
     		  System.out.println("This packet equals the simulation entered packet.");
     		  //Delay packet implementation
     		  //Wait the inputed simulation amount of time entered
     		  System.out.println("Delaying " + Integer.parseInt(packetDelayTime) + " milliseconds until packet being sent...");
     	      try {
     	          Thread.sleep(Integer.parseInt(packetDelayTime));
+    	          sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),
+                          clientAddress, clientPort);
+
+			 System.out.println( "Intermediate Host: Sending packet");
+			 System.out.println("To client: " + sendPacket.getAddress());
+			 System.out.println("Destination client port: " + sendPacket.getPort());
+			 len = sendPacket.getLength();
+			 System.out.println("Length: " + len);
+			 System.out.print("Containing: ");
+			 received = new String(sendPacket.getData());
+			 System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + sendPacket.getData()[0] + sendPacket.getData()[1] + sendPacket.getData()[2] + sendPacket.getData()[3] + "\n");
+			 
+			 System.out.println("DATA: "+ new String(data2));
+			   
+			 // Send the datagram packet to the client via the send socket. 
+			 try {
+			    sendReceiveSocket.send(sendPacket);
+			 } catch (IOException e) {
+			    e.printStackTrace();
+			    System.exit(1);
+			 }
+			
+			 System.out.println("Intermediate Host: packet sent");
     	      } catch (InterruptedException e ) {
     	          e.printStackTrace();
     	          System.exit(1);
@@ -247,35 +300,36 @@ public class SimpleEchoErrorSimulator {
     	  }
     	  //runSim = false;
     	  //isSimPacket = false;
+      } else {
+          sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),
+                  clientAddress, clientPort);
+
+		System.out.println( "Intermediate Host: Sending packet");
+		System.out.println("To client: " + sendPacket.getAddress());
+		System.out.println("Destination client port: " + sendPacket.getPort());
+		len = sendPacket.getLength();
+		System.out.println("Length: " + len);
+		System.out.print("Containing: ");
+		received = new String(sendPacket.getData());
+		System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + sendPacket.getData()[0] + sendPacket.getData()[1] + sendPacket.getData()[2] + sendPacket.getData()[3] + "\n");
+		
+		System.out.println("DATA: "+ new String(data2));
+		
+		// Send the datagram packet to the client via the send socket. 
+		try {
+		sendReceiveSocket.send(sendPacket);
+		} catch (IOException e) {
+		e.printStackTrace();
+		System.exit(1);
+		}
+		
+		System.out.println("Intermediate Host: packet sent");
       }
       
-      
-      sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),
-                               clientAddress, clientPort);
-
-      System.out.println( "Intermediate Host: Sending packet");
-      System.out.println("To client: " + sendPacket.getAddress());
-      System.out.println("Destination client port: " + sendPacket.getPort());
-      len = sendPacket.getLength();
-      System.out.println("Length: " + len);
-      System.out.print("Containing: ");
-      received = new String(sendPacket.getData());
-      System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + sendPacket.getData()[0] + sendPacket.getData()[1] + sendPacket.getData()[2] + sendPacket.getData()[3] + "\n");
-      
-      System.out.println("DATA: "+ new String(data2));
-        
-      // Send the datagram packet to the client via the send socket. 
-      try {
-         sendReceiveSocket.send(sendPacket);
-      } catch (IOException e) {
-         e.printStackTrace();
-         System.exit(1);
-      }
-
-      System.out.println("Intermediate Host: packet sent");
-      
+       
       if(isSimPacket){
     	  if (duplicateSim){
+    		  runSim = false;
     		  System.out.println("This packet equals the simulation entered packet.");
     		  
     		 //create datagram with packet information, length, address, and port number
