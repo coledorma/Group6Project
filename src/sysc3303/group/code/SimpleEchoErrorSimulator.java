@@ -98,9 +98,11 @@ public class SimpleEchoErrorSimulator {
       
       if (isSimPacket){
     	  if (lostSim) {
+    		  runSim = false;
     		  System.out.println("This packet equals the simulation entered packet.");
     		//TODO: Lose packet implementation
     	  } else if (delaySim) {
+    		  runSim = false;
     		  System.out.println("This packet equals the simulation entered packet.");
     		  //Delay packet implementation
     		  //Wait the inputed simulation amount of time entered
@@ -165,6 +167,7 @@ public class SimpleEchoErrorSimulator {
       
       if(isSimPacket){
     	  if (duplicateSim){
+    		  runSim = false;
     		  System.out.println("This packet equals the simulation entered packet.");
     		  
     		 //create datagram with packet information, length, address, and port number
