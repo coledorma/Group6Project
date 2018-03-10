@@ -621,7 +621,7 @@ public class SimpleEchoClient {
 			}
 		}else 
 			blkNum[1] += 1;
-		System.out.println("Current Block# : " + blkNum[0] + blkNum[1]);
+		System.out.println("Block# incremented to: " + blkNum[0] + blkNum[1]);
 		return blkNum;
 	}
 	public static void main(String args[]){

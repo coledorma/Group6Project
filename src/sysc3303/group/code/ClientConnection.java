@@ -274,7 +274,7 @@ public class ClientConnection implements Runnable {
 			}
 		}else 
 			blkNum[1] += 1;
-		System.out.println("Block# : " + blkNum[0] + blkNum[1]);
+		System.out.println("Block# incremented to: " + blkNum[0] + blkNum[1]);
 		return blkNum;
 	}
 	public void writeRequest() {
