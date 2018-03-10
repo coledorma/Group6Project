@@ -109,33 +109,6 @@ public class SimpleEchoErrorSimulator {
     		  System.out.println("Delaying " + Integer.parseInt(packetDelayTime) + " milliseconds until packet being sent...");
     	      try {
     	          Thread.sleep(Integer.parseInt(packetDelayTime));
-    	          if (ccPort == 0) {
-    	              sendPacket = new DatagramPacket(data, receivePacket.getLength(),
-    	                       receivePacket.getAddress(), 6969);
-    	           } else {
-    	             sendPacket = new DatagramPacket(data, receivePacket.getLength(),
-    	                       receivePacket.getAddress(), ccPort);
-    	           }
-    	           
-
-    	           System.out.println( "Intermediate Host: Sending packet");
-    	           System.out.println("To server: " + sendPacket.getAddress());
-    	           System.out.println("Destination server port: " + sendPacket.getPort());
-    	           len = sendPacket.getLength();
-    	           System.out.println("Length: " + len);
-    	           System.out.print("Containing: ");
-    	           received = new String(sendPacket.getData());  
-    	           System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + receivePacket.getData()[0] + receivePacket.getData()[1] + receivePacket.getData()[2] + receivePacket.getData()[3] + "\n");
-    	           System.out.println("DATA: "+ new String(data));
-    	             
-    	           // Send the datagram packet to the client via the send socket. 
-    	           try {
-    	              sendReceiveSocket.send(sendPacket);
-    	           } catch (IOException e) {
-    	              e.printStackTrace();
-    	              System.exit(1);
-    	           }
-    	           System.out.println("Intermediate Host: packet sent");
     	      } catch (InterruptedException e ) {
     	          e.printStackTrace();
     	          System.exit(1);
@@ -143,7 +116,9 @@ public class SimpleEchoErrorSimulator {
     	  }
     	  //runSim = false;
     	  //isSimPacket = false;
-      } else {
+      } 
+      
+      if (!lostSim) {
           if (ccPort == 0) {
               sendPacket = new DatagramPacket(data, receivePacket.getLength(),
                        receivePacket.getAddress(), 6969);
@@ -270,29 +245,6 @@ public class SimpleEchoErrorSimulator {
     		  System.out.println("Delaying " + Integer.parseInt(packetDelayTime) + " milliseconds until packet being sent...");
     	      try {
     	          Thread.sleep(Integer.parseInt(packetDelayTime));
-    	          sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),
-                          clientAddress, clientPort);
-
-			 System.out.println( "Intermediate Host: Sending packet");
-			 System.out.println("To client: " + sendPacket.getAddress());
-			 System.out.println("Destination client port: " + sendPacket.getPort());
-			 len = sendPacket.getLength();
-			 System.out.println("Length: " + len);
-			 System.out.print("Containing: ");
-			 received = new String(sendPacket.getData());
-			 System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + sendPacket.getData()[0] + sendPacket.getData()[1] + sendPacket.getData()[2] + sendPacket.getData()[3] + "\n");
-			 
-			 System.out.println("DATA: "+ new String(data2));
-			   
-			 // Send the datagram packet to the client via the send socket. 
-			 try {
-			    sendReceiveSocket.send(sendPacket);
-			 } catch (IOException e) {
-			    e.printStackTrace();
-			    System.exit(1);
-			 }
-			
-			 System.out.println("Intermediate Host: packet sent");
     	      } catch (InterruptedException e ) {
     	          e.printStackTrace();
     	          System.exit(1);
@@ -300,7 +252,9 @@ public class SimpleEchoErrorSimulator {
     	  }
     	  //runSim = false;
     	  //isSimPacket = false;
-      } else {
+      }
+      
+      if (!lostSim) {
           sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),
                   clientAddress, clientPort);
 
@@ -324,8 +278,8 @@ public class SimpleEchoErrorSimulator {
 		}
 		
 		System.out.println("Intermediate Host: packet sent");
-      }
       
+      }
        
       if(isSimPacket){
     	  if (duplicateSim){
