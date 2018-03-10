@@ -95,12 +95,41 @@ public class SimpleEchoErrorSimulator {
       if(runSim) {
     	  isSimPacket = checkIfSimPacket(receivedByteArray,packetType, packetNumByteArray);  
       }
-      
+
       if (isSimPacket){
     	  if (lostSim) {
+   
     		  runSim = false;
-    		  System.out.println("This packet equals the simulation entered packet.");
+//    		  receivePacket = new DatagramPacket(firstLostAck, firstLostAck.length);
+    		  System.out.println("1. This packet equals the LOST simulation entered packet.");
     		//TODO: Lose packet implementation
+    		  
+    		  if(data[1] == 4) {
+	    		  try {
+
+	    			sendReceiveSocket.receive(receivePacket);
+//	    			receiveSocket.receive(receivePacket);
+					sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),
+			                  clientAddress, clientPort);
+//					receiveSocket.send(sendPacket);
+//					receivePacket = new DatagramPacket(secondAck, secondAck.length);
+					
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+    		  }
+    		  if(data[1] == 3) {
+	    		  try {
+	    				receiveSocket.receive(receivePacket);
+	    				sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),
+	    		                  clientAddress, clientPort);
+	    				System.out.println(receivePacket.getData());
+	    				System.out.println(receivePacket.getLength());
+
+	      		  } catch (IOException e) {
+	    				e.printStackTrace();
+	      		  }
+    		}
     	  } else if (delaySim) {
     		  runSim = false;
     		  System.out.println("This packet equals the simulation entered packet.");
@@ -118,7 +147,7 @@ public class SimpleEchoErrorSimulator {
     	  //isSimPacket = false;
       } 
       
-      if (!lostSim) {
+//      if (!lostSim) {
           if (ccPort == 0) {
               sendPacket = new DatagramPacket(data, receivePacket.getLength(),
                        receivePacket.getAddress(), 6969);
@@ -138,7 +167,7 @@ public class SimpleEchoErrorSimulator {
            System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + receivePacket.getData()[0] + receivePacket.getData()[1] + receivePacket.getData()[2] + receivePacket.getData()[3] + "\n");
            System.out.println("DATA: "+ new String(data));
              
-           // Send the datagram packet to the client via the send socket. 
+           // Send the datagram packet to the server via the send socket. 
            try {
               sendReceiveSocket.send(sendPacket);
            } catch (IOException e) {
@@ -146,7 +175,7 @@ public class SimpleEchoErrorSimulator {
               System.exit(1);
            }
            System.out.println("Intermediate Host: packet sent");
-      }
+//      }
       
       // Slow things down (wait 5 seconds)
     /*  try {
@@ -231,12 +260,41 @@ public class SimpleEchoErrorSimulator {
       if(runSim) {
     	  isSimPacket = checkIfSimPacket(secReceivedByteArray,packetType, packetNumByteArray);  
       }
-      
+
+      System.out.println("Packet Type: " + packetType);
+      System.out.println("Here: " + data2[1]);
       if (isSimPacket){
+   
+    	  
     	  if (lostSim) {
     		  runSim = false;
-    		  System.out.println("This packet equals the simulation entered packet.");
-    		  //TODO: Lose packet implementation
+    		  if((packetType.equals("DATA") && data2[1] == 3) || (packetType.equals("ACK") && data2[1] == 4)) {
+	    		  System.out.println("2. This packet equals the LOST simulation entered packet.");
+	    		  //TODO: Lose packet implementation
+	    		  
+	    		  if(data2[1] == 4) {
+	        		  try {
+	        			receiveSocket.receive(receivePacket);
+	    				sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),
+	    		                  clientAddress, clientPort);
+	    				
+	    			} catch (IOException e) {
+	    				e.printStackTrace();
+	    			}
+	    		  }
+	    		  
+	    		  if(data2[1] == 3) {
+		    		  try {
+		  				sendReceiveSocket.receive(receivePacket);
+		  				sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),
+		  		                  clientAddress, clientPort);
+		  				System.out.println(receivePacket.getData());
+		  				System.out.println(receivePacket.getLength());
+		    		  } catch (IOException e) {
+		  				e.printStackTrace();
+		  			}
+	    	  }
+    		  }
     	  } else if (delaySim) {
     		  runSim = false;
     		  System.out.println("This packet equals the simulation entered packet.");
@@ -254,7 +312,7 @@ public class SimpleEchoErrorSimulator {
     	  //isSimPacket = false;
       }
       
-      if (!lostSim) {
+//      if (!lostSim) {
           sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),
                   clientAddress, clientPort);
 
@@ -279,7 +337,7 @@ public class SimpleEchoErrorSimulator {
 		
 		System.out.println("Intermediate Host: packet sent");
       
-      }
+//      }
        
       if(isSimPacket){
     	  if (duplicateSim){
@@ -300,14 +358,6 @@ public class SimpleEchoErrorSimulator {
     	 // runSim = false;
     	 // isSimPacket = false;
       }
-      
-      /*// Slow things down (wait 5 seconds)
-      try {
-          Thread.sleep(5000);
-      } catch (InterruptedException e ) {
-          e.printStackTrace();
-          System.exit(1);
-      }*/
 
    }
    

@@ -236,7 +236,6 @@ public class ClientConnection implements Runnable {
 					} 
 				}
 				block++;
-				mode++;
 			}
 		}
 		//errorSent = false;       
@@ -360,7 +359,7 @@ public class ClientConnection implements Runnable {
 			byte[] blockNumber = {zero, zero};  //zeroize blockNumber for new DATA transfer 			
 			
 			ByteArrayOutputStream storeData = new ByteArrayOutputStream();
-			int mode = 0;
+
 			while(!lastPacket) {
 				// Now was for first block of file to be sent
 				byte data1[] = new byte[516];
@@ -371,7 +370,7 @@ public class ClientConnection implements Runnable {
 				
 				while(!dataReceived) {
 				      try {        
-				    	 sendReceiveSocket.setSoTimeout(30000);
+				    	 sendReceiveSocket.setSoTimeout(45000);
 				         System.out.println("Waiting for file"); 
 				         sendReceiveSocket.receive(sendReceivePacket);
 				         System.out.println("Packet Received");
@@ -459,7 +458,6 @@ public class ClientConnection implements Runnable {
 					ackToSend = createAckRequest(zero,ACK,sendReceivePacket.getData()[2],sendReceivePacket.getData()[3]);
 					sendPacket = new DatagramPacket(ackToSend, ackToSend.length, sendReceivePacket.getAddress(), sendReceivePacket.getPort());
 
-//		 		   	if(mode != 0) {
 		 		      try {
 		 		    	  sendReceiveSocket.send(sendPacket);
 		 		      } catch (IOException e) {
@@ -467,9 +465,8 @@ public class ClientConnection implements Runnable {
 		 		    	  System.exit(1);
 		 		      }
 		 			  System.out.println("Server: ACK sent.\n"); 
-//		 			}
 		 		}
-				mode++;
+
 			}
 
 

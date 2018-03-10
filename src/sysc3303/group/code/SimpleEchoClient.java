@@ -204,13 +204,13 @@ public class SimpleEchoClient {
 			long start = 0;
 			final long end;
 			blockNumber = incrementBN(blockNumber); 
-			
+			int TIMER = 45000;
 			while(!dataReceived) {
 				try {
 					// Block until a datagram is received via sendReceiveSocket.
 					System.out.println("Waiting for Data:");
 					start = System.currentTimeMillis();
-					sendReceiveSocket.setSoTimeout(35000);
+					sendReceiveSocket.setSoTimeout(TIMER);
 					sendReceiveSocket.receive(receivePacket);
 					dataReceived = checkAckData(receivePacket, blockNumber);
 
@@ -220,6 +220,7 @@ public class SimpleEchoClient {
 					try {
 						System.out.println("Resending Packet!");
 						sendReceiveSocket.send(sendPacket);
+						TIMER = 5000;
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -381,8 +382,6 @@ public class SimpleEchoClient {
 	 	     } catch (IOException e) {
 	 			e.printStackTrace();
 	 	     }*/
-			System.out.println("Mode: " + mode);
-			mode++;
 		}
 	}
 
@@ -476,7 +475,7 @@ public class SimpleEchoClient {
 		if (receivePacket.getData()[1] == 5) {
 			errorReceived = true;
 		}		
-		int mode = 0;
+		
 		while (!lastPacket && !errorReceived) {
 			ByteArrayOutputStream output = new ByteArrayOutputStream();
 
@@ -519,7 +518,6 @@ public class SimpleEchoClient {
 			//-----------SENDING REQUEST----------------
 			// Send the datagram packet to the server via the send/receive socket.
 
-			//		      if(mode!=2) {
 			try {
 				sendReceiveSocket.send(sendPacket);
 			} catch (IOException e) {
@@ -528,7 +526,6 @@ public class SimpleEchoClient {
 			}
 
 			System.out.println("Client: Packet sent.\n"); 
-			//		      }
 
 
 			count = count+512;
@@ -586,7 +583,6 @@ public class SimpleEchoClient {
 
 			block++;
 
-			mode++;
 		}
 		errorReceived = false;
 	}
