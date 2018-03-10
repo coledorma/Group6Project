@@ -132,6 +132,7 @@ public class SimpleEchoErrorSimulator {
     		}
     	  } else if (delaySim) {
     		  runSim = false;
+    		  isSimPacket = false;
     		  System.out.println("This packet equals the simulation entered packet.");
     		  //Delay packet implementation
     		  //Wait the inputed simulation amount of time entered
@@ -202,6 +203,7 @@ public class SimpleEchoErrorSimulator {
       if(isSimPacket){
     	  if (duplicateSim){
     		  runSim = false;
+    		  isSimPacket = false;
     		  System.out.println("This packet equals the simulation entered packet.");
     		  
     		 //create datagram with packet information, length, address, and port number
