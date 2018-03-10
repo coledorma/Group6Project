@@ -247,11 +247,16 @@ public class ClientConnection implements Runnable {
 			//check if it's for the right block of Data
 			if ((packet.getData()[2] == blkNum[0]) && (packet.getData()[3] == blkNum[1])) 
 			{ //valid block# for the ACK/DATA block that was just sent
+				System.out.println("checkAckData = true.");
 				return true;  
-			}else //it's a valid ACK/DATA, but likely a duplicate so discard/false
+			}else {//it's a valid ACK/DATA, but likely a duplicate so discard/false
+				System.out.println("checkAckData = false. \n Duplicate discarded.");
 				return false;
-		}else  //not a valid 03xx/04xx packet
+			}
+		}else  {//not a valid 03xx/04xx packet
+			System.out.println("checkAckData = false. \n invalid ACK/DATA.");
 			return false;
+		}
 	}
 	public byte[] incrementBN(byte[] blkNum){
 		byte nine = 9;
