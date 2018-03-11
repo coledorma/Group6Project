@@ -447,7 +447,7 @@ public class SimpleEchoClient {
 		try {
 			// Block until a datagram is received via sendReceiveSocket.  
 			System.out.println("Waiting for WRQ ACK from server");
-			sendReceiveSocket.setSoTimeout(15000);
+			sendReceiveSocket.setSoTimeout(50000);
 			sendReceiveSocket.receive(receivePacket);
 			block++;
 		} catch(SocketTimeoutException toe) {

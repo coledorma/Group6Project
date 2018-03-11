@@ -272,20 +272,20 @@ public class SimpleEchoErrorSimulator {
 		System.out.println("Packet Type: " + packetType);
 		System.out.println("Here: " + data2[1]);
 		if (isSimPacket){
-
-
 			if (lostSim) {
 				runSim = false;
 				if((packetType.equals("DATA") && data2[1] == 3) || (packetType.equals("ACK") && data2[1] == 4)) {
 					System.out.println("2. This packet equals the LOST simulation entered packet.");
-					//TODO: Lose packet implementation
 
 					if(data2[1] == 4) {
 						try {
-							receiveSocket.receive(receivePacket);
+							if (data2[3] == 0) {
+								sendReceiveSocket.receive(receivePacket);
+							} else {
+								receiveSocket.receive(receivePacket);
+							}
 							sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),
 									clientAddress, clientPort);
-
 						} catch (IOException e) {
 							e.printStackTrace();
 						}

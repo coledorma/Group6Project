@@ -386,6 +386,7 @@ public class ClientConnection implements Runnable {
 							 try {
 								 System.out.println("Resending Packet!");
 								 sendReceiveSocket.send(sendPacket);
+								 System.out.println(sendPacket.getData().toString());
 							} catch (IOException e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
