@@ -594,8 +594,15 @@ public class SimpleEchoClient {
 			//check if it's for the right block of Data
 			if ((packet.getData()[2] == blkNum[0]) && (packet.getData()[3] == blkNum[1])) 
 			{ //valid block# for the ACK/DATA block that was just sent
-				System.out.println("checkAckData = true.");
-				return true;  
+	//			if (packet.getAddress() == sendReceivePacket.getAddress() && packet.getPort() == sendReceivePacket.getPort())
+				//		{ //valid TID
+					System.out.println("checkAckData = true.");
+					return true;
+	/*			}else {
+					System.out.println("CheckAckData = false. \n Wrong TID, Packet discarded.");
+					return false; //wrong TID so discard/false
+				} 
+	*/
 			}else {//it's a valid ACK/DATA, but likely a duplicate so discard/false
 				System.out.println("checkAckData = false. \n Duplicate discarded.");
 				return false;

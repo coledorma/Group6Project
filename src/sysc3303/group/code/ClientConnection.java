@@ -186,23 +186,23 @@ public class ClientConnection implements Runnable {
 
 
 
-//		 		if(mode != 0) {
-		 		try {
-		 		    sendReceiveSocket.send(sendReceivePacket);
-		 		} catch (IOException e) {
-		 		    e.printStackTrace();
-		 		    System.exit(1);
-		 		}
+				//		 		if(mode != 0) {
+				try {
+					sendReceiveSocket.send(sendReceivePacket);
+				} catch (IOException e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
 
-		 		 System.out.println("Server: Block of DATA sent.\n"); 
-//		 	}
-				
+				System.out.println("Server: Block of DATA sent.\n"); 
+				//		 	}
+
 				count = count+512;	  
 
 				// Once first block of data as been sent, wait for ACK from client before sending another block
 				boolean resent = false;
 				boolean ackReceived = false;
-				
+
 				while (!ackReceived){	
 					// Once block of data has been sent, wait for ACK from client before sending another block
 					try {
@@ -212,7 +212,7 @@ public class ClientConnection implements Runnable {
 						System.out.println("ACK Received!");
 						ackReceived = checkAckData(receivePacket, blockNumber);
 					} catch (SocketTimeoutException timeoutEx){ 
-//						timeoutEx.printStackTrace();
+						//						timeoutEx.printStackTrace();
 						/*if we want to limit the amount of resends, we can add a tracker var (resent) 
 						  and exit if we've already resent a packet */
 						if (resent) {
@@ -240,43 +240,7 @@ public class ClientConnection implements Runnable {
 		}
 		//errorSent = false;       
 	}
-	public boolean checkAckData(DatagramPacket packet, byte[] blkNum)
-	{
-		//check for valid 04xx / 03xx format
-		if ((packet.getData()[0] == zero) && ((packet.getData()[1] == ACK) || (packet.getData()[1] == DATA))) { //valid 04xx Ack
-			//check if it's for the right block of Data
-			if ((packet.getData()[2] == blkNum[0]) && (packet.getData()[3] == blkNum[1])) 
-			{ //valid block# for the ACK/DATA block that was just sent
-				System.out.println("checkAckData = true.");
-				return true;  
-			}else {//it's a valid ACK/DATA, but likely a duplicate so discard/false
-				System.out.println("checkAckData = false. \n Duplicate discarded.");
-				return false;
-			}
-		}else  {//not a valid 03xx/04xx packet
-			System.out.println("checkAckData = false. \n invalid ACK/DATA.");
-			return false;
-		}
-	}
-	public byte[] incrementBN(byte[] blkNum){
-		byte nine = 9;
-		byte one = 1;
-		byte zero = 0;
-		if (blkNum[1] == nine)
-		{
-			if (blkNum[0] == nine) //blkNum = {9,9} so recycle back to {0,1}
-			{
-				blkNum[0] = zero;
-				blkNum[1] = one;
-			}else {
-				blkNum[0] += 1;
-				blkNum[1] = zero;
-			}
-		}else 
-			blkNum[1] += 1;
-		System.out.println("Block# incremented to: " + blkNum[0] + blkNum[1]);
-		return blkNum;
-	}
+
 	public void writeRequest() {
 		// First send ACK of WRQ request
 		byte zero = 0;
@@ -342,7 +306,7 @@ public class ClientConnection implements Runnable {
 		}
 
 		boolean lastPacket = false;
-		
+
 		while(!errorSent && !lastPacket){
 
 			System.out.println("Sending ACK of WRQ");
@@ -354,15 +318,15 @@ public class ClientConnection implements Runnable {
 				System.exit(1);
 			}
 
-		/*	try {
+			/*	try {
 				Thread.sleep(5000);
 			} catch (InterruptedException e ) {
 				e.printStackTrace();
 				System.exit(1);
 			}
-	*/
+			 */
 			byte[] blockNumber = {zero, zero};  //zeroize blockNumber for new DATA transfer 			
-			
+
 			ByteArrayOutputStream storeData = new ByteArrayOutputStream();
 
 			while(!lastPacket) {
@@ -372,33 +336,33 @@ public class ClientConnection implements Runnable {
 				blockNumber = incrementBN(blockNumber); 
 				System.out.println("Server: Waiting for DATA.\n");
 				boolean dataReceived = false;
-				
+
 				while(!dataReceived) {
-				      try {        
-				    	 sendReceiveSocket.setSoTimeout(45000);
-				         System.out.println("Waiting for file"); 
-				         sendReceiveSocket.receive(sendReceivePacket);
-				         System.out.println("Packet Received");
-				         dataReceived = checkAckData(sendReceivePacket, blockNumber);
-				      } catch (SocketTimeoutException ste) {
-							 //This is where u should recent the datagram
-							 System.out.println("Caught");
-							 try {
-								 System.out.println("Resending Packet!");
-								 sendReceiveSocket.send(sendPacket);
-								 System.out.println(sendPacket.getData().toString());
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-					 	} catch (IOException e) {
-				         System.out.print("IO Exception: likely:");
-				         System.out.println("Receive Socket Timed Out.\n" + e);
-				         e.printStackTrace();
-				         System.exit(1);
-				      }
-			      
-			      }
+					try {        
+						sendReceiveSocket.setSoTimeout(45000);
+						System.out.println("Waiting for file"); 
+						sendReceiveSocket.receive(sendReceivePacket);
+						System.out.println("Packet Received");
+						dataReceived = checkAckData(sendReceivePacket, blockNumber);
+					} catch (SocketTimeoutException ste) {
+						//This is where u should recent the datagram
+						System.out.println("Caught");
+						try {
+							System.out.println("Resending Packet!");
+							sendReceiveSocket.send(sendPacket);
+							System.out.println(sendPacket.getData().toString());
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					} catch (IOException e) {
+						System.out.print("IO Exception: likely:");
+						System.out.println("Receive Socket Timed Out.\n" + e);
+						e.printStackTrace();
+						System.exit(1);
+					}
+
+				}
 
 				// If block size is under 516 it is the last block of data to receive
 				int len = sendReceivePacket.getLength();
@@ -464,14 +428,14 @@ public class ClientConnection implements Runnable {
 					ackToSend = createAckRequest(zero,ACK,sendReceivePacket.getData()[2],sendReceivePacket.getData()[3]);
 					sendPacket = new DatagramPacket(ackToSend, ackToSend.length, sendReceivePacket.getAddress(), sendReceivePacket.getPort());
 
-		 		      try {
-		 		    	  sendReceiveSocket.send(sendPacket);
-		 		      } catch (IOException e) {
-		 		    	  e.printStackTrace();
-		 		    	  System.exit(1);
-		 		      }
-		 			  System.out.println("Server: ACK sent.\n"); 
-		 		}
+					try {
+						sendReceiveSocket.send(sendPacket);
+					} catch (IOException e) {
+						e.printStackTrace();
+						System.exit(1);
+					}
+					System.out.println("Server: ACK sent.\n"); 
+				}
 
 			}
 
@@ -549,4 +513,50 @@ public class ClientConnection implements Runnable {
 		return msg;
 	}
 
+
+
+	public boolean checkAckData(DatagramPacket packet, byte[] blkNum)
+	{
+		//check for valid 04xx / 03xx format
+		if ((packet.getData()[0] == zero) && ((packet.getData()[1] == ACK) || (packet.getData()[1] == DATA))) { //valid 04xx Ack
+			//check if it's for the right block of Data
+			if ((packet.getData()[2] == blkNum[0]) && (packet.getData()[3] == blkNum[1])) 
+			{ //valid block# for the ACK/DATA block that was just sent
+	//			if (packet.getAddress() == sendReceivePacket.getAddress() && packet.getPort() == sendReceivePacket.getPort())
+	//			{ //valid TID
+					System.out.println("checkAckData = true.");
+					return true;
+	/*			}else {
+					System.out.println("CheckAckData = false. \n Wrong TID, Packet discarded.");
+					return false; //wrong TID so discard/false
+				}
+	*/
+		}else {//it's a valid ACK/DATA, but likely a duplicate so discard/false
+				System.out.println("checkAckData = false. \n Duplicate discarded.");
+				return false;
+			}
+		}else  {//not a valid 03xx/04xx packet
+			System.out.println("checkAckData = false. \n invalid ACK/DATA.");
+			return false;
+		}
+	}
+	public byte[] incrementBN(byte[] blkNum){
+		byte nine = 9;
+		byte one = 1;
+		byte zero = 0;
+		if (blkNum[1] == nine)
+		{
+			if (blkNum[0] == nine) //blkNum = {9,9} so recycle back to {0,1}
+			{
+				blkNum[0] = zero;
+				blkNum[1] = one;
+			}else {
+				blkNum[0] += 1;
+				blkNum[1] = zero;
+			}
+		}else 
+			blkNum[1] += 1;
+		System.out.println("Block# incremented to: " + blkNum[0] + blkNum[1]);
+		return blkNum;
+	}
 }
