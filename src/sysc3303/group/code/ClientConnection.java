@@ -19,9 +19,11 @@ import java.util.Arrays;
 
 public class ClientConnection implements Runnable {
 	byte[] data;
-	DatagramPacket sendReceivePacket;
+	DatagramPacket originalReceivePacket;
+	DatagramPacket errorPacket;
 	DatagramSocket sendReceiveSocket;
 	DatagramPacket receivePacket;
+	DatagramPacket sendPacket;
 	int packetSize = 516;
 	byte zero = 0;
 	byte fileExistErrCode = 6;
@@ -38,7 +40,7 @@ public class ClientConnection implements Runnable {
 
 	public ClientConnection(byte[] fileData, DatagramPacket packet,DatagramSocket socket){
 		data = fileData;
-		sendReceivePacket = packet;
+		originalReceivePacket = packet;
 		try {
 			sendReceiveSocket = new DatagramSocket();
 		} catch (SocketException e) {
@@ -77,9 +79,8 @@ public class ClientConnection implements Runnable {
 		}
 
 		//Create datagram for sending back error request
-		DatagramPacket sendPacket1;
-		sendPacket1 = new DatagramPacket(temp, temp.length,
-				sendReceivePacket.getAddress(), sendReceivePacket.getPort());
+		sendPacket = new DatagramPacket(temp, temp.length,
+				originalReceivePacket.getAddress(), originalReceivePacket.getPort());
 
 		//Check if we have read permissions
 		String currDir = System.getProperty("user.dir");
@@ -96,11 +97,11 @@ public class ClientConnection implements Runnable {
 			byte ackToSend[];
 			System.out.println("Server: ERROR request created.");
 			ackToSend = createErrorRequest(zero,ERROR,zero,accessViolationErrCode,errMsg,zero);
-			sendPacket1 = new DatagramPacket(ackToSend, ackToSend.length, sendReceivePacket.getAddress(), sendReceivePacket.getPort());
+			errorPacket = new DatagramPacket(ackToSend, ackToSend.length, originalReceivePacket.getAddress(), originalReceivePacket.getPort());
 
 			//Sending ERROR request
 			try {
-				sendReceiveSocket.send(sendPacket1);
+				sendReceiveSocket.send(errorPacket);
 				System.out.println("Server: ERROR request sent.");
 				errorSent = true;
 			} catch (IOException e) {
@@ -132,11 +133,11 @@ public class ClientConnection implements Runnable {
 				byte errToSend[];
 				System.out.println("Server: ERROR request created.");
 				errToSend = createErrorRequest(zero,ERROR,zero,fileNotFoundErrCode,errMsg,zero);
-				DatagramPacket sendPacket = new DatagramPacket(errToSend, errToSend.length, sendReceivePacket.getAddress(), sendReceivePacket.getPort());
+				errorPacket = new DatagramPacket(errToSend, errToSend.length, originalReceivePacket.getAddress(), originalReceivePacket.getPort());
 
 				//Sending ERROR request
 				try {
-					sendReceiveSocket.send(sendPacket);
+					sendReceiveSocket.send(errorPacket);
 					System.out.println("Server: ERROR request sent.");
 					errorSent = true;
 				} catch (IOException e) {
@@ -181,14 +182,14 @@ public class ClientConnection implements Runnable {
 				message = new String(msg); 
 				System.out.println("Server: sending a packet containing:\n" + "Byte Form: " + msg + "\n" + "String Form: " + message + "\n");
 
-				sendReceivePacket = new DatagramPacket(msg, msg.length, sendReceivePacket.getAddress(), sendReceivePacket.getPort());
+				sendPacket = new DatagramPacket(msg, msg.length, originalReceivePacket.getAddress(), originalReceivePacket.getPort());
 
 
 
 
 				//		 		if(mode != 0) {
 				try {
-					sendReceiveSocket.send(sendReceivePacket);
+					sendReceiveSocket.send(sendPacket);
 				} catch (IOException e) {
 					e.printStackTrace();
 					System.exit(1);
@@ -223,7 +224,7 @@ public class ClientConnection implements Runnable {
 						//resend and go through while loop again for waiting on Ack
 						System.out.println("Socket timed out, resending Data packet.");
 						try {
-							sendReceiveSocket.send(sendReceivePacket);
+							sendReceiveSocket.send(sendPacket);
 						} catch (IOException e) {
 							e.printStackTrace();
 							System.exit(1);
@@ -247,9 +248,8 @@ public class ClientConnection implements Runnable {
 		byte ACK = 4;
 		byte msg[];
 		msg = createAckRequest(zero,ACK,zero,zero);
-		DatagramPacket sendPacket;
 		sendPacket = new DatagramPacket(msg, msg.length,
-				sendReceivePacket.getAddress(), sendReceivePacket.getPort());
+				originalReceivePacket.getAddress(), originalReceivePacket.getPort());
 
 		String currDir = System.getProperty("user.dir");
 
@@ -272,11 +272,11 @@ public class ClientConnection implements Runnable {
 			byte ackToSend[];
 			System.out.println("Server: ERROR request created.");
 			ackToSend = createErrorRequest(zero,ERROR,zero,accessViolationErrCode,errMsg,zero);
-			sendPacket = new DatagramPacket(ackToSend, ackToSend.length, sendReceivePacket.getAddress(), sendReceivePacket.getPort());
+			errorPacket = new DatagramPacket(ackToSend, ackToSend.length, originalReceivePacket.getAddress(), originalReceivePacket.getPort());
 
 			//Sending ERROR request
 			try {
-				sendReceiveSocket.send(sendPacket);
+				sendReceiveSocket.send(errorPacket);
 				System.out.println("Server: ERROR request sent.");
 				errorSent = true;
 			} catch (IOException e) {
@@ -292,11 +292,11 @@ public class ClientConnection implements Runnable {
 			byte errToSend[];
 			System.out.println("Server: ERROR request created.");
 			errToSend = createErrorRequest(zero,ERROR,zero,fileExistErrCode,errMsg,zero);
-			sendPacket = new DatagramPacket(errToSend, errToSend.length, sendReceivePacket.getAddress(), sendReceivePacket.getPort());
+			errorPacket = new DatagramPacket(errToSend, errToSend.length, originalReceivePacket.getAddress(), originalReceivePacket.getPort());
 
 			//Sending ERROR request
 			try {
-				sendReceiveSocket.send(sendPacket);
+				sendReceiveSocket.send(errorPacket);
 				System.out.println("Server: ERROR request sent.");
 				errorSent = true;
 			} catch (IOException e) {
@@ -332,7 +332,9 @@ public class ClientConnection implements Runnable {
 			while(!lastPacket) {
 				// Now was for first block of file to be sent
 				byte data1[] = new byte[516];
-				sendReceivePacket = new DatagramPacket(data1, data1.length);
+				//Create datagram for receiving back error request
+				receivePacket = new DatagramPacket(data1, data1.length);
+				//sendReceivePacket = new DatagramPacket(data1, data1.length);
 				blockNumber = incrementBN(blockNumber); 
 				System.out.println("Server: Waiting for DATA.\n");
 				boolean dataReceived = false;
@@ -341,9 +343,9 @@ public class ClientConnection implements Runnable {
 					try {        
 						sendReceiveSocket.setSoTimeout(45000);
 						System.out.println("Waiting for file"); 
-						sendReceiveSocket.receive(sendReceivePacket);
+						sendReceiveSocket.receive(receivePacket);
 						System.out.println("Packet Received");
-						dataReceived = checkAckData(sendReceivePacket, blockNumber);
+						dataReceived = checkAckData(receivePacket, blockNumber);
 					} catch (SocketTimeoutException ste) {
 						//This is where u should recent the datagram
 						System.out.println("Caught");
@@ -365,7 +367,7 @@ public class ClientConnection implements Runnable {
 				}
 
 				// If block size is under 516 it is the last block of data to receive
-				int len = sendReceivePacket.getLength();
+				int len = receivePacket.getLength();
 
 				if (len < 516){
 					System.out.println("Last packet received.\n");
@@ -373,12 +375,12 @@ public class ClientConnection implements Runnable {
 				}
 
 				System.out.println("Received Data:");
-				System.out.println("Block: " + sendReceivePacket.getData()[2] + sendReceivePacket.getData()[3]);
-				System.out.println("Destination Server port: " + sendReceivePacket.getPort());
+				System.out.println("Block: " + receivePacket.getData()[2] + receivePacket.getData()[3]);
+				System.out.println("Destination Server port: " + receivePacket.getPort());
 				System.out.print("Containing: \n");
-				String received = new String(sendReceivePacket.getData());
+				String received = new String(receivePacket.getData());
 				byte temp[] = new byte[512];
-				temp = Arrays.copyOfRange(sendReceivePacket.getData(), 4, 516);
+				temp = Arrays.copyOfRange(receivePacket.getData(), 4, 516);
 				received = new String(temp);
 				System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + received + "\n");
 
@@ -407,11 +409,11 @@ public class ClientConnection implements Runnable {
 							byte ackToSend[];
 							System.out.println("Server: ERROR request created.");
 							ackToSend = createErrorRequest(zero,ERROR,zero,diskFullErrCode,errMsg,zero);
-							sendPacket = new DatagramPacket(ackToSend, ackToSend.length, sendReceivePacket.getAddress(), sendReceivePacket.getPort());
+							errorPacket = new DatagramPacket(ackToSend, ackToSend.length, receivePacket.getAddress(), receivePacket.getPort());
 
 							//Sending ERROR request
 							try { 
-								sendReceiveSocket.send(sendPacket);
+								sendReceiveSocket.send(errorPacket);
 								System.out.println("Server: ERROR request sent.");
 								errorSent = true;
 							} catch (IOException e) {
@@ -425,8 +427,8 @@ public class ClientConnection implements Runnable {
 				if(!errorSent) {
 					// Send ACK of DATA to client before waiting to receive next block
 					byte ackToSend[];
-					ackToSend = createAckRequest(zero,ACK,sendReceivePacket.getData()[2],sendReceivePacket.getData()[3]);
-					sendPacket = new DatagramPacket(ackToSend, ackToSend.length, sendReceivePacket.getAddress(), sendReceivePacket.getPort());
+					ackToSend = createAckRequest(zero,ACK,receivePacket.getData()[2],receivePacket.getData()[3]);
+					sendPacket = new DatagramPacket(ackToSend, ackToSend.length, receivePacket.getAddress(), receivePacket.getPort());
 
 					try {
 						sendReceiveSocket.send(sendPacket);
@@ -522,7 +524,7 @@ public class ClientConnection implements Runnable {
 			//check if it's for the right block of Data
 			if ((packet.getData()[2] == blkNum[0]) && (packet.getData()[3] == blkNum[1])) 
 			{ //valid block# for the ACK/DATA block that was just sent
-	//			if (packet.getAddress() == sendReceivePacket.getAddress() && packet.getPort() == sendReceivePacket.getPort())
+	//			if (packet.getAddress() == originalReceivePacket.getAddress() && packet.getPort() == originalReceivePacket.getPort())
 	//			{ //valid TID
 					System.out.println("checkAckData = true.");
 					return true;
