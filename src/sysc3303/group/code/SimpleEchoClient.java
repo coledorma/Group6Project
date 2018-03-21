@@ -171,7 +171,7 @@ public class SimpleEchoClient {
 		System.out.println("Length: " + len);
 		System.out.print("Containing: \n");
 		String received = new String(sendPacket.getData()); 
-		System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + received + "\n"); // or could print "s"
+		System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + sendPacket.getData()[0] + sendPacket.getData()[1] + sendPacket.getData()[2] + sendPacket.getData()[3] + "\n"); // or could print "s"
 
 		//-----------SENDING REQUEST----------------
 		// Send the datagram packet to the server via the send/receive socket. 
@@ -220,7 +220,7 @@ public class SimpleEchoClient {
 					try {
 						System.out.println("Resending Packet!");
 						sendReceiveSocket.send(sendPacket);
-						TIMER = 5000;
+						TIMER = 50000;
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -244,13 +244,14 @@ public class SimpleEchoClient {
 			System.out.println("Server port: " + receivePacket.getPort());
 			len = receivePacket.getLength();
 			if (len < 516){
+				System.out.println("\nLast block received...\n");
 				lastPacket = true;
 			}
 			System.out.println("Length: " + len);
 			System.out.print("Containing: \n");
 			// Form a String from the byte array.
 			received = new String(receivePacket.getData());   
-			System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form:" + received + "\n");
+			System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form: " + receivePacket.getData()[0] + receivePacket.getData()[1] + receivePacket.getData()[2] + receivePacket.getData()[3] + "\n");
 			System.out.println("DATA: "+ new String(data));
 			//ByteArrayOutputStream output = new ByteArrayOutputStream();
 
@@ -317,7 +318,7 @@ public class SimpleEchoClient {
 				if(detectUSB) {
 					long checkDisk = f1.getFreeSpace();	//record amount of free space 
 					if(checkDisk < receivePacket.getLength() - 4) {	//check if the size of the file to read is greater than available room on USB
-						String errStr = "Yout do not have enough space on your disk to read this file.";
+						String errStr = "You do not have enough space on your disk to read this file.";
 						isRoom = false;
 						System.out.println(errStr);
 						return;
@@ -340,7 +341,7 @@ public class SimpleEchoClient {
 					msg = createAckRequest(zero,ACK,blockNumber[0],blockNumber[1]);
 
 					message = new String(msg); 
-					System.out.println("Client: sending a packet containing:\n" + "Byte Form: " + msg + "\n" + "String Form: " + message + "\n");
+					System.out.println("Client: sending ACK packet containing:\n" + "Byte Form: " + msg + "\n" + "String Form: " + msg[0] + msg[1] + msg[2] + msg[3] + "\n");
 
 					try {
 						sendPacket = new DatagramPacket(msg, msg.length,
@@ -357,7 +358,7 @@ public class SimpleEchoClient {
 					System.out.println("Length: " + len);
 					System.out.print("Containing: \n");
 					received = new String(sendPacket.getData()); 
-					System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + received + "\n");
+					System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + sendPacket.getData()[0] + sendPacket.getData()[1] + sendPacket.getData()[2] + sendPacket.getData()[3] + "\n");
 
 					//-----------SENDING ACK REQUEST----------------
 					// Send the datagram packet to the server via the send/receive socket. 
@@ -422,7 +423,7 @@ public class SimpleEchoClient {
 		System.out.println("Length: " + len);
 		System.out.print("Containing: \n");
 		String received = new String(sendPacket.getData()); 
-		System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + received + "\n"); // or could print "s"
+		System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + sendPacket.getData()[0] + sendPacket.getData()[1] + sendPacket.getData()[2] + sendPacket.getData()[3] + "\n"); // or could print "s"
 
 		//-----------SENDING REQUEST----------------WRQ
 		// Send the datagram packet to the server via the send/receive socket. 
@@ -467,7 +468,7 @@ public class SimpleEchoClient {
 		System.out.print("Containing: \n");
 		// Form a String from the byte array.
 		received = new String(receivePacket.getData());   
-		System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form: " + received + "\n");
+		System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form: " + receivePacket.getData()[0] + receivePacket.getData()[1] + receivePacket.getData()[2] + receivePacket.getData()[3] + "\n");
 
 		byte[] blockNumber = {zero, zero};  //zeroize blockNumber for new DATA transfer 
 
@@ -495,7 +496,7 @@ public class SimpleEchoClient {
 
 			msg = createDataRequest(zero,DATA,blockNumber[0],blockNumber[1],dataBlock);
 			message = new String(msg); 
-			System.out.println("Client: sending a Data packet containing:\n" + "Byte Form: " + msg + "\n" + "String Form: " + message + "\n");
+			System.out.println("Client: sending a Data packet containing:\n" + "Byte Form: " + msg + "\n" + "String Form: " + msg[0] + msg[1] + msg[2] + msg[3] + "\n");
 
 			try {
 				sendPacket = new DatagramPacket(msg, msg.length,
@@ -513,7 +514,7 @@ public class SimpleEchoClient {
 			System.out.println("Length: " + len);
 			System.out.print("Containing: \n");
 			received = new String(sendPacket.getData()); 
-			System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + received + "\n");
+			System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + sendPacket.getData()[0] + sendPacket.getData()[1] + sendPacket.getData()[2] + sendPacket.getData()[3] + "\n");
 
 			//-----------SENDING REQUEST----------------
 			// Send the datagram packet to the server via the send/receive socket.

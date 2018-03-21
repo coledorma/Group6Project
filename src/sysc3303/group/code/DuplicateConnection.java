@@ -15,7 +15,7 @@ public class DuplicateConnection implements Runnable {
 	//is passed datagram packet information and time delay
 	public DuplicateConnection(DatagramPacket packet, String packetDelayTime) {
        
-		System.out.println("Duplicate Connection Thread Running...");
+		System.out.println("\nDuplicate Connection Thread Running...");
 		sendPacket = packet;
 		delay = packetDelayTime;
 		
@@ -29,7 +29,7 @@ public class DuplicateConnection implements Runnable {
 	public void run() {
 		
 		 //Delay for user entered amount of time
-		  System.out.println("Waiting " + delay + " milliseconds until duplicate packet being sent...");
+		  System.out.println("Waiting " + delay + " milliseconds until duplicate packet being sent...\n");
 	      try {
 	          Thread.sleep(Integer.parseInt(delay));	//put thread to sleep
 	      } catch (InterruptedException e ) {
@@ -38,9 +38,9 @@ public class DuplicateConnection implements Runnable {
 	      }
 	       
 	      //prepare to send packet
-	       System.out.println( "Intermediate Host: Sending duplicate packet");
-	       System.out.println("To server: " + sendPacket.getAddress());
-	       System.out.println("Destination server port: " + sendPacket.getPort());
+	       System.out.println( "Duplicate Host: Sending duplicate packet");
+	       System.out.println("To: " + sendPacket.getAddress());
+	       System.out.println("Destination port: " + sendPacket.getPort());
 	       len = sendPacket.getLength();
 	       System.out.println("Length: " + len);
 	       System.out.print("Containing: ");
@@ -56,7 +56,7 @@ public class DuplicateConnection implements Runnable {
 	       }
 	       
 	      //packet has been sent
-		  System.out.println("Intermediate Host: Duplicate packet sent from Duplicate Connection Thread");
+		  System.out.println("Duplicate Host: Duplicate packet sent from Duplicate Connection Thread.\n");
 			
 		 //stop thread?
 	}

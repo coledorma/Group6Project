@@ -350,7 +350,7 @@ public class SimpleEchoErrorSimulator {
 		if(isSimPacket){
 			if (duplicateSim){
 				runSim = false;
-				System.out.println("This packet equals the simulation entered packet.");
+				System.out.println("\nThis packet equals the simulation entered packet.");
 
 				//create datagram with packet information, length, address, and port number
 				sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(),
@@ -362,6 +362,12 @@ public class SimpleEchoErrorSimulator {
 				//create Duplicate packet connection thread, and pass it datagram information and time delay 
 				thread = new Thread(new DuplicateConnection(sendPacket, packetDelayTime));
 				thread.start();
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e ) {
+					e.printStackTrace();
+					System.exit(1);
+				} 
 			}
 			// runSim = false;
 			// isSimPacket = false;
