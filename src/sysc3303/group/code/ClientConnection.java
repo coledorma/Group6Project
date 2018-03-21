@@ -521,7 +521,7 @@ public class ClientConnection implements Runnable {
 	{
 		InetAddress packetAddr = packet.getAddress();
 		InetAddress clientAddr = originalReceivePacket.getAddress(); 
-		
+
 		//check for valid 04xx / 03xx format
 		if ((packet.getData()[0] == zero) && ((packet.getData()[1] == ACK) || (packet.getData()[1] == DATA))) { //valid 04xx Ack
 			//check if it's for the right block of Data
@@ -537,8 +537,8 @@ public class ClientConnection implements Runnable {
 					System.out.println("packet port = " + packet.getPort() + ", origPacket = " + originalReceivePacket.getPort() );
 					return false; //wrong TID so discard/false
 				}
-	
-		}else {//it's a valid ACK/DATA, but likely a duplicate so discard/false
+
+			}else {//it's a valid ACK/DATA, but likely a duplicate so discard/false
 				System.out.println("checkAckData = false. \n Duplicate discarded.");
 				return false;
 			}
