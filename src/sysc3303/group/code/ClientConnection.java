@@ -370,7 +370,7 @@ public class ClientConnection implements Runnable {
 				int len = receivePacket.getLength();
 
 				if (len < 516){
-					System.out.println("Last packet received.\n");
+					System.out.println("\nLast packet received...\n");
 					lastPacket = true;
 				}
 
@@ -519,20 +519,25 @@ public class ClientConnection implements Runnable {
 
 	public boolean checkAckData(DatagramPacket packet, byte[] blkNum)
 	{
+		InetAddress packetAddr = packet.getAddress();
+		InetAddress clientAddr = originalReceivePacket.getAddress(); 
+		
 		//check for valid 04xx / 03xx format
 		if ((packet.getData()[0] == zero) && ((packet.getData()[1] == ACK) || (packet.getData()[1] == DATA))) { //valid 04xx Ack
 			//check if it's for the right block of Data
 			if ((packet.getData()[2] == blkNum[0]) && (packet.getData()[3] == blkNum[1])) 
 			{ //valid block# for the ACK/DATA block that was just sent
-	//			if (packet.getAddress() == originalReceivePacket.getAddress() && packet.getPort() == originalReceivePacket.getPort())
-	//			{ //valid TID
+				if (packetAddr.equals(clientAddr) && packet.getPort() == originalReceivePacket.getPort())
+				{ //valid TID
 					System.out.println("checkAckData = true.");
 					return true;
-	/*			}else {
+				}else {
 					System.out.println("CheckAckData = false. \n Wrong TID, Packet discarded.");
+					System.out.println("packet address = " + packet.getAddress() + ", origPacket = " + originalReceivePacket.getAddress() );
+					System.out.println("packet port = " + packet.getPort() + ", origPacket = " + originalReceivePacket.getPort() );
 					return false; //wrong TID so discard/false
 				}
-	*/
+	
 		}else {//it's a valid ACK/DATA, but likely a duplicate so discard/false
 				System.out.println("checkAckData = false. \n Duplicate discarded.");
 				return false;
