@@ -30,6 +30,7 @@ public class ClientConnection implements Runnable {
 	byte fileNotFoundErrCode = 1;
 	byte accessViolationErrCode = 2;
 	byte diskFullErrCode = 3;
+	byte tftpError = 4;
 	byte RRQ = 1;
 	byte WRQ = 2;
 	byte DATA = 3;
@@ -346,6 +347,23 @@ public class ClientConnection implements Runnable {
 						sendReceiveSocket.receive(receivePacket);
 						System.out.println("Packet Received");
 						dataReceived = checkAckData(receivePacket, blockNumber);
+						if (!((receivePacket.getData()[0] == zero) && (receivePacket.getData()[1] == DATA))) {
+							String errStr = "Invalid Opcode for DATA";
+							System.out.println(errStr);
+							byte[] errMsg = errStr.getBytes();
+							byte errToSend[];
+							errToSend = createErrorRequest(zero,ERROR,zero,tftpError,errMsg,zero);
+							errorPacket = new DatagramPacket(errToSend, errToSend.length, receivePacket.getAddress(), receivePacket.getPort());
+							try {
+								sendReceiveSocket.send(errorPacket);
+								errorSent = true;
+								System.out.println("Server: ERROR request sent.");
+								dataReceived = true;
+							} catch (IOException e) {
+								e.printStackTrace();
+								System.exit(1);
+							}
+						}
 					} catch (SocketTimeoutException ste) {
 						//This is where u should recent the datagram
 						System.out.println("Caught");
@@ -365,31 +383,39 @@ public class ClientConnection implements Runnable {
 					}
 
 				}
-
-				// If block size is under 516 it is the last block of data to receive
-				int len = receivePacket.getLength();
-
-				if (len < 516){
-					System.out.println("\nLast packet received...\n");
-					lastPacket = true;
+				
+				if (errorSent) {
+					break;
 				}
 
-				System.out.println("Received Data:");
-				System.out.println("Block: " + receivePacket.getData()[2] + receivePacket.getData()[3]);
-				System.out.println("Destination Server port: " + receivePacket.getPort());
-				System.out.print("Containing: \n");
-				String received = new String(receivePacket.getData());
-				byte temp[] = new byte[512];
-				temp = Arrays.copyOfRange(receivePacket.getData(), 4, 516);
-				received = new String(temp);
-				System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + received + "\n");
+				
+				if (!errorSent) {
+					// If block size is under 516 it is the last block of data to receive
+					int len = receivePacket.getLength();
 
-				try {
-					//add all the contents into an array of bytes 
-					storeData.write(temp);
-				} catch (IOException e1) {
-					e1.printStackTrace();
+					if (len < 516){
+						System.out.println("\nLast packet received...\n");
+						lastPacket = true;
+					}
+
+					System.out.println("Received Data:");
+					System.out.println("Block: " + receivePacket.getData()[2] + receivePacket.getData()[3]);
+					System.out.println("Destination Server port: " + receivePacket.getPort());
+					System.out.print("Containing: \n");
+					String received = new String(receivePacket.getData());
+					byte temp[] = new byte[512];
+					temp = Arrays.copyOfRange(receivePacket.getData(), 4, 516);
+					received = new String(temp);
+					System.out.println("--> Byte Form: " + sendPacket.getData() + "\n" + "--> String Form: " + received + "\n");
+
+					try {
+						//add all the contents into an array of bytes 
+						storeData.write(temp);
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
 				}
+
 
 				if(lastPacket) {
 

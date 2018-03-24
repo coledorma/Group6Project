@@ -213,7 +213,9 @@ public class SimpleEchoClient {
 					sendReceiveSocket.setSoTimeout(TIMER);
 					sendReceiveSocket.receive(receivePacket);
 					dataReceived = checkAckData(receivePacket, blockNumber);
-
+					if (dataReceived == false) {
+						errorReceived = true;
+					}
 				}catch (SocketTimeoutException ste) {
 					//This is where u should recent the datagram
 					System.out.println("Caught, timed out.");
@@ -542,7 +544,11 @@ public class SimpleEchoClient {
 					sendReceiveSocket.setSoTimeout(30000);
 					sendReceiveSocket.receive(receivePacket);
 					ackReceived = checkAckData(receivePacket, blockNumber);
-
+					if (receivePacket.getData()[1] == 5) {
+						System.out.println(receivePacket.getData().toString());
+						errorReceived = true;
+						break;
+					}	
 				} catch (SocketTimeoutException timeoutEx){ 
 					//					timeoutEx.printStackTrace();
 					/*if we want to limit the amount of resends, we can add a tracker var (resent) 
