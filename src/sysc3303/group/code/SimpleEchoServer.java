@@ -13,14 +13,17 @@ public class SimpleEchoServer {
 
 	DatagramPacket sendPacket, receivePacket;
 	DatagramSocket sendSocket, receiveSocket;
-
+	DatagramPacket errorPacket;
+	byte ERROR = 5;
+	byte tftpError = 4;
+	byte zero = 0;
 	String reqType;
 
 	public SimpleEchoServer()
 	{
 		try {
 			receiveSocket = new DatagramSocket(6969);
-
+			sendSocket = new DatagramSocket();
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
@@ -40,19 +43,26 @@ public class SimpleEchoServer {
 		try {        
 			System.out.println("Waiting...");
 			receiveSocket.receive(receivePacket);
-			if (!(checkRequest(data))) {
-				/* *******
-				TODO: send back ERROR request to client
-				 */ 
-				throw new IllegalArgumentException("Request is invalid");
+			if (checkRequest(data) != "") {
+				String errStr = checkRequest(data);
+				System.out.println(errStr);
+				byte[] errMsg = errStr.getBytes();
+				byte errToSend[];
+				errToSend = createErrorRequest(zero,ERROR,zero,tftpError,errMsg,zero);
+				errorPacket = new DatagramPacket(errToSend, errToSend.length, receivePacket.getAddress(), receivePacket.getPort());
+				try {
+					sendSocket.send(errorPacket);
+					System.out.println("Server: ERROR request sent.");
+				} catch (IOException e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
 			} else {
 				// Request is valid so create a new client connection thread and pass original request to it as data
 				thread = new Thread(new ClientConnection(data, receivePacket, receiveSocket));
 				thread.start();
-
+				thread.join();
 			}
-			System.out.println("Creating new Client Connection Thread...");
-			thread.join();
 		} catch (IOException e) {
 			System.out.print("IO Exception: likely:");
 			System.out.println("Receive Socket Timed Out.\n" + e);
@@ -95,12 +105,12 @@ public class SimpleEchoServer {
 	/*
 	Function to check incoming WRQ/RRQ request from client and verify it
 	 */
-	public boolean checkRequest(byte msg[]) {
+	public String checkRequest(byte msg[]) {
 		byte zero = 0;
 		byte one = 1;
 		byte two = 2;
 		if (!(msg[0] == zero && msg[1] == one || msg[0] == zero && msg[1] == two)) {
-			return false;
+			return "Opcode Error";
 		}
 
 		byte temp[] = new byte[100];
@@ -112,11 +122,11 @@ public class SimpleEchoServer {
 
 		String file = new String(temp,0,temp.length);
 		if (file == "") {
-			return false;
+			return "No File Name";
 		}
 
 		if (msg[2+i] != zero) {
-			return false;
+			return "TFTP Error";
 		}
 
 		byte temp2[] = new byte[100];
@@ -130,20 +140,39 @@ public class SimpleEchoServer {
 		String type = new String(temp2,0,temp2.length);
 		type = type.trim();
 		if (type == "") {
-			return false; 
+			return "No Mode"; 
 		} 
 		else if (!( type.equalsIgnoreCase("netascii") ||
 				type.equalsIgnoreCase("octet") ||
 				type.equalsIgnoreCase("mail") )){
-			return false;
+			return "Invalid Mode";
 
 		}
 
 		if (msg[3+i] != zero) {
-			return false;
+			return "TFTP Error";
 		} 
 
-		return true;
+		return "";
+	}
+	
+	public byte[] createErrorRequest(byte firstByte, byte secondByte, byte errCode1, byte errCode2, byte[] errMsg, byte lastByte){
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+		output.write(firstByte);
+		output.write(secondByte);
+		output.write(errCode1);
+		output.write(errCode2);
+		try {
+			output.write(errMsg);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		output.write(lastByte);
+
+		byte msg[] = output.toByteArray();
+		return msg;
 	}
 
 	public static void main( String args[] )
