@@ -213,6 +213,11 @@ public class ClientConnection implements Runnable {
 						sendReceiveSocket.receive(receivePacket);
 						System.out.println("ACK Received!");
 						ackReceived = checkAckData(receivePacket, blockNumber);
+						if (receivePacket.getData()[1] == 5) {
+							System.out.println(receivePacket.getData().toString());
+							System.out.println("ERROR RECEIVED");
+							break;
+						}	
 					} catch (SocketTimeoutException timeoutEx){ 
 						//						timeoutEx.printStackTrace();
 						/*if we want to limit the amount of resends, we can add a tracker var (resent) 

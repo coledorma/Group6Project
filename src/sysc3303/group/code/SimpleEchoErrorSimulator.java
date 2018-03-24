@@ -169,7 +169,7 @@ public class SimpleEchoErrorSimulator {
 		} 
 
 		if (ccPort == 0) {
-			sendPacket = new DatagramPacket(data, receivePacket.getLength(),
+			sendPacket = new DatagramPacket(data, data.length,
 					receivePacket.getAddress(), 6969);
 			
 		} else {
@@ -290,7 +290,9 @@ public class SimpleEchoErrorSimulator {
 			if(invalidTFTPOpcode) {
 				data2[0] = opCodeOrBlockChange[0];
 				data2[1] = opCodeOrBlockChange[1];
-				
+			} else if (invalidBlockNum) {
+				data2[2] = opCodeOrBlockChange[0];
+				data2[3] = opCodeOrBlockChange[1];
 			} else if (lostSim) {
 				runSim = false;
 				if((packetType.equals("DATA") && data2[1] == 3) || (packetType.equals("ACK") && data2[1] == 4)) {
@@ -632,6 +634,7 @@ public class SimpleEchoErrorSimulator {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		temp.write(0);
 		byte newData[] = temp.toByteArray();
 		return newData;
 	}

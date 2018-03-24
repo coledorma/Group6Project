@@ -12,7 +12,7 @@ import java.util.Scanner;
 
 public class SimpleEchoClient {
 
-	DatagramPacket sendPacket, receivePacket;
+	DatagramPacket sendPacket, receivePacket, errorPacket;
 	DatagramSocket sendReceiveSocket;
 	int packetSize = 516;
 	byte zero = 0;
@@ -20,8 +20,11 @@ public class SimpleEchoClient {
 	byte WRQ = 2;
 	byte DATA = 3;
 	byte ACK = 4;
+	byte ERROR = 5;
+	byte tftpError = 4;
 	byte msg[];
 	boolean errorReceived = false;
+	boolean errorSent = false;
 
 	public SimpleEchoClient()
 	{
@@ -213,8 +216,22 @@ public class SimpleEchoClient {
 					sendReceiveSocket.setSoTimeout(TIMER);
 					sendReceiveSocket.receive(receivePacket);
 					dataReceived = checkAckData(receivePacket, blockNumber);
-					if (dataReceived == false) {
-						errorReceived = true;
+					if (!((receivePacket.getData()[0] == zero) && (receivePacket.getData()[1] == DATA))) {
+						String errStr = "Invalid Opcode for DATA";
+						System.out.println(errStr);
+						byte[] errMsg = errStr.getBytes();
+						byte errToSend[];
+						errToSend = createErrorRequest(zero,ERROR,zero,tftpError,errMsg,zero);
+						errorPacket = new DatagramPacket(errToSend, errToSend.length, receivePacket.getAddress(), receivePacket.getPort());
+						try {
+							sendReceiveSocket.send(errorPacket);
+							errorSent = true;
+							System.out.println("Client: ERROR request sent.");
+							dataReceived = true;
+						} catch (IOException e) {
+							e.printStackTrace();
+							System.exit(1);
+						}
 					}
 				}catch (SocketTimeoutException ste) {
 					//This is where u should recent the datagram
@@ -232,6 +249,10 @@ public class SimpleEchoClient {
 					e.printStackTrace();
 					System.exit(1);
 				}
+			}
+			
+			if (errorSent) {
+				break;
 			}
 
 			System.out.println("Client: Packet received:");
@@ -618,6 +639,25 @@ public class SimpleEchoClient {
 			System.out.println("checkAckData = false. \n invalid ACK/DATA.");
 			return false;
 		}
+	}
+	
+	public byte[] createErrorRequest(byte firstByte, byte secondByte, byte errCode1, byte errCode2, byte[] errMsg, byte lastByte){
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+		output.write(firstByte);
+		output.write(secondByte);
+		output.write(errCode1);
+		output.write(errCode2);
+		try {
+			output.write(errMsg);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		output.write(lastByte);
+
+		byte msg[] = output.toByteArray();
+		return msg;
 	}
 	public byte[] incrementBN(byte[] blkNum){
 		byte nine = 9;
