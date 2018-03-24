@@ -566,10 +566,28 @@ public class SimpleEchoClient {
 					sendReceiveSocket.receive(receivePacket);
 					ackReceived = checkAckData(receivePacket, blockNumber);
 					if (receivePacket.getData()[1] == 5) {
+						System.out.println("ERROR Packet Received");
 						System.out.println(receivePacket.getData().toString());
 						errorReceived = true;
 						break;
-					}	
+					}
+					if (!((receivePacket.getData()[0] == zero) && (receivePacket.getData()[1] == ACK))) {
+						String errStr = "Invalid Opcode for ACK";
+						System.out.println(errStr);
+						byte[] errMsg = errStr.getBytes();
+						byte errToSend[];
+						errToSend = createErrorRequest(zero,ERROR,zero,tftpError,errMsg,zero);
+						errorPacket = new DatagramPacket(errToSend, errToSend.length, receivePacket.getAddress(), receivePacket.getPort());
+						try {
+							sendReceiveSocket.send(errorPacket);
+							errorSent = true;
+							System.out.println("Client: ERROR request sent.");
+							ackReceived = true;
+						} catch (IOException e) {
+							e.printStackTrace();
+							System.exit(1);
+						}
+					}
 				} catch (SocketTimeoutException timeoutEx){ 
 					//					timeoutEx.printStackTrace();
 					/*if we want to limit the amount of resends, we can add a tracker var (resent) 
@@ -594,7 +612,8 @@ public class SimpleEchoClient {
 					e.printStackTrace();
 					System.exit(1);
 				}
-				if (ackReceived) {
+				
+				if (ackReceived && !errorReceived ) {
 					// Process the received datagram.
 					System.out.println("Client: Ack received:");
 					System.out.println("From Server: " + receivePacket.getAddress());
@@ -608,7 +627,9 @@ public class SimpleEchoClient {
 
 				}
 			}
-
+			if (errorSent) {
+				break;
+			}
 			block++;
 
 		}

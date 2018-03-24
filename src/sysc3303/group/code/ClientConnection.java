@@ -213,11 +213,23 @@ public class ClientConnection implements Runnable {
 						sendReceiveSocket.receive(receivePacket);
 						System.out.println("ACK Received!");
 						ackReceived = checkAckData(receivePacket, blockNumber);
-						if (receivePacket.getData()[1] == 5) {
-							System.out.println(receivePacket.getData().toString());
-							System.out.println("ERROR RECEIVED");
-							break;
-						}	
+						if (!((receivePacket.getData()[0] == zero) && (receivePacket.getData()[1] == ACK))) {
+							String errStr = "Invalid Opcode for ACK";
+							System.out.println(errStr);
+							byte[] errMsg = errStr.getBytes();
+							byte errToSend[];
+							errToSend = createErrorRequest(zero,ERROR,zero,tftpError,errMsg,zero);
+							errorPacket = new DatagramPacket(errToSend, errToSend.length, receivePacket.getAddress(), receivePacket.getPort());
+							try {
+								sendReceiveSocket.send(errorPacket);
+								errorSent = true;
+								System.out.println("Server: ERROR request sent.");
+								ackReceived = true;
+							} catch (IOException e) {
+								e.printStackTrace();
+								System.exit(1);
+							}
+						}
 					} catch (SocketTimeoutException timeoutEx){ 
 						//						timeoutEx.printStackTrace();
 						/*if we want to limit the amount of resends, we can add a tracker var (resent) 
