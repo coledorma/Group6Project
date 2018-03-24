@@ -16,7 +16,7 @@ public class SimpleEchoErrorSimulator {
 	DatagramSocket sendReceiveSocket, receiveSocket;
 	String packetType = null, packetDelayTime = null;
 	Boolean duplicateSim = false, delaySim = false, lostSim = false;
-	Boolean invalidTFTPOpcode = false, changeMode = false, changeFileName = false, invalidBlockNum = false; 
+	Boolean invalidTFTPOpcode = false, changeMode = false, changeFileName = false, invalidBlockNum = false, invalidErrCode = false; 
 	Boolean runSim = false;
 	byte zero = 0;
 	byte RRQ = 1;
@@ -415,7 +415,7 @@ public class SimpleEchoErrorSimulator {
 
 				//Wait for packet type
 				Scanner readPacketType = new Scanner(System.in);
-				System.out.println("What type of packet would you like to lose? (WRQ/RRQ/DATA/ACK)\n");
+				System.out.println("What type of packet would you like to lose? (WRQ/RRQ/DATA/ACK/ERROR)\n");
 				packetType = readPacketType.next(); // Scans the next token of the input as an int.
 
 				if (packetType.equals("DATA") || packetType.equals("ACK")){
@@ -524,7 +524,7 @@ public class SimpleEchoErrorSimulator {
 							packetNumByteArray[1] = 1;
 						}
 						
-					}else if(packetType.equals("DATA") || packetType.equals("ACK")) {
+					}else if(packetType.equals("DATA") || packetType.equals("ACK") || packetType.equals("ERROR")) {
 						Scanner readPacketNum = new Scanner(System.in);
 						System.out.println("What is the first of the two bytes of the block number? (1/2/3/etc... i.e. 0 of 01, 2 of 23)\n");
 						byte tempFirst = readPacketNum.nextByte(); // Scans the next token of the input as an int.
