@@ -217,7 +217,7 @@ public class SimpleEchoClient {
 					sendReceiveSocket.receive(receivePacket);
 					dataReceived = checkAckData(receivePacket, blockNumber);
 					if (!((receivePacket.getData()[0] == zero) && (receivePacket.getData()[1] == DATA))) {
-						String errStr = "Invalid Opcode for DATA";
+						String errStr = "Invalid Opcode for DATA/ACK";
 						System.out.println(errStr);
 						byte[] errMsg = errStr.getBytes();
 						byte errToSend[];

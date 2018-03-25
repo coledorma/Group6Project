@@ -121,8 +121,8 @@ public class SimpleEchoServer {
 		}
 
 		String file = new String(temp,0,temp.length);
-		if (file == "") {
-			return "No File Name";
+		if (!file.toLowerCase().contains(".txt")) {
+			return "File invalid";
 		}
 
 		if (msg[2+i] != zero) {

@@ -23,6 +23,7 @@ public class SimpleEchoErrorSimulator {
 	byte WRQ = 2;
 	byte DATA = 3;
 	byte ACK = 4;
+	byte ERROR = 5;
 	byte[] packetNumByteArray = {zero,zero};
 	byte[] opCodeOrBlockChange = {zero, zero};
 	String newMode, fileName;
@@ -499,13 +500,13 @@ public class SimpleEchoErrorSimulator {
 			} else if(simNum.equals("4")) {
 				Scanner getInvalidTFTPType = new Scanner(System.in);
 				System.out.println("Choose one of the following:\n(1) Invalid TFTP opcode\n"
-						+ "(2) Invalid Mode on RRQ/WRQ\n(3) Invalid Filename\n(4) Invalid Block Number\n(5) Invalid Error");
+						+ "(2) Invalid Mode on RRQ/WRQ\n(3) Invalid Filename");
 				String invalidType = getInvalidTFTPType.nextLine();
 				
 				if(invalidType.equals("1")) {
 					invalidTFTPOpcode = true;
 					Scanner readPacketType = new Scanner(System.in);
-					System.out.println("What type of packet would you like to change opcode on? (WRQ/RRQ/DATA/ACK)");
+					System.out.println("What type of packet would you like to change opcode on? (WRQ/RRQ/DATA/ACK/ERROR)");
 					packetType = readPacketType.nextLine();
 					
 					if(packetType.equals("WRQ") || packetType.equals("RRQ")) {
@@ -667,6 +668,11 @@ public class SimpleEchoErrorSimulator {
 		} else if (packetType.equals("RRQ")) {
 			byte[] packetTypeByte = {zero, RRQ};
 			if (packetTypeByte[1] == receivedPacketType[1]) {
+				return true;
+			}
+		} else if (packetType.equals("ERROR")) {
+			byte[] packetTypeByte = {zero, ERROR};
+			if (blockNumber[0] == receivedBlockNumber[0] && blockNumber[1] == receivedBlockNumber[1] && packetTypeByte[1] == receivedPacketType[1]) {
 				return true;
 			}
 		}
