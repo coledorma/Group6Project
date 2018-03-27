@@ -13,11 +13,11 @@ import java.util.Scanner;
 public class SimpleEchoErrorSimulator {
 
 	DatagramPacket sendPacket, receivePacket;
-	DatagramSocket sendReceiveSocket, receiveSocket;
+	DatagramSocket sendReceiveSocket, receiveSocket, unknownSocket;
 	String packetType = null, packetDelayTime = null;
 	Boolean duplicateSim = false, delaySim = false, lostSim = false;
 	Boolean invalidTFTPOpcode = false, changeMode = false, changeFileName = false, invalidBlockNum = false, invalidErrCode = false; 
-	Boolean runSim = false;
+	Boolean runSim = false, unknownTID = false;
 	byte zero = 0;
 	byte RRQ = 1;
 	byte WRQ = 2;
@@ -27,7 +27,7 @@ public class SimpleEchoErrorSimulator {
 	byte[] packetNumByteArray = {zero,zero};
 	byte[] opCodeOrBlockChange = {zero, zero};
 	String newMode, fileName;
-	
+
 	int ccPort;
 
 	public SimpleEchoErrorSimulator()
@@ -101,24 +101,32 @@ public class SimpleEchoErrorSimulator {
 		}
 
 		if (isSimPacket){
-			
+
 			if(invalidTFTPOpcode) {
 
 				data[0] = opCodeOrBlockChange[0];
 				data[1] = opCodeOrBlockChange[1];
 
-				
+
 			} else if(changeMode) {
 				data = changeMode(data, newMode);
-				
+
 			} else if(changeFileName) {
 				data = changeFileName(data, fileName);
-			
+
 			} else if(invalidBlockNum) {
 				System.out.println("HOOOOOOOOOOOOOOOOW");
 				data[2] = opCodeOrBlockChange[0];
 				data[3] = opCodeOrBlockChange[1];
-				
+
+			}else if (unknownTID){
+				System.out.println("creating unknown Socket for forwarding to server.");
+				try {
+					unknownSocket = new DatagramSocket();					
+				}catch (SocketException se) {
+					se.printStackTrace();
+					System.exit(1);
+				} 
 			}else if (lostSim) {
 				runSim = false;
 				//    		  receivePacket = new DatagramPacket(firstLostAck, firstLostAck.length);
@@ -172,7 +180,7 @@ public class SimpleEchoErrorSimulator {
 		if (ccPort == 0) {
 			sendPacket = new DatagramPacket(data, data.length,
 					receivePacket.getAddress(), 6969);
-			
+
 		} else {
 			sendPacket = new DatagramPacket(data, receivePacket.getLength(),
 					receivePacket.getAddress(), ccPort);
@@ -191,11 +199,22 @@ public class SimpleEchoErrorSimulator {
 		System.out.println("DATA: "+ new String(data));
 
 		// Send the datagram packet to the server via the send socket. 
-		try {
-			sendReceiveSocket.send(sendPacket);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
+		if (isSimPacket && unknownTID){
+			try {
+				System.out.println("Sending packet through unknownSocket (simulate unknown TID) to server");
+				unknownSocket.send(sendPacket);
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
+			unknownTID = false;
+		}else {
+			try {
+				sendReceiveSocket.send(sendPacket);
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
 		}
 		System.out.println("Intermediate Host: packet sent");
 		//      }
@@ -294,6 +313,14 @@ public class SimpleEchoErrorSimulator {
 			} else if (invalidBlockNum) {
 				data2[2] = opCodeOrBlockChange[0];
 				data2[3] = opCodeOrBlockChange[1];
+			} else if (unknownTID){
+				try {
+					System.out.println("creating unknown Socket for forwarding to client.");
+					unknownSocket = new DatagramSocket();					
+				}catch (SocketException se) {
+					se.printStackTrace();
+					System.exit(1);
+				} 
 			} else if (lostSim) {
 				runSim = false;
 				if((packetType.equals("DATA") && data2[1] == 3) || (packetType.equals("ACK") && data2[1] == 4)) {
@@ -358,11 +385,22 @@ public class SimpleEchoErrorSimulator {
 		System.out.println("DATA: "+ new String(data2));
 
 		// Send the datagram packet to the client via the send socket. 
-		try {
-			sendReceiveSocket.send(sendPacket);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
+		if (isSimPacket && unknownTID){
+			try {
+				System.out.println("Sending packet through unknownSocket (simulate unknown TID) to client");
+				unknownSocket.send(sendPacket);
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
+			unknownTID = false;
+		}else {
+			try {
+				sendReceiveSocket.send(sendPacket);
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
 		}
 
 		System.out.println("Intermediate Host: packet sent");
@@ -408,7 +446,7 @@ public class SimpleEchoErrorSimulator {
 			//Wait for sim number
 			runSim = true;
 			Scanner readSimInput = new Scanner(System.in);
-			System.out.println("Which of the following would you like to simulate?\n(1) - Lose A Packet\n(2) - Delay A Packet\n(3) - Duplicate A Packet\n(4) - Illegal TFTP operation ");
+			System.out.println("Which of the following would you like to simulate?\n(1) - Lose A Packet\n(2) - Delay A Packet\n(3) - Duplicate A Packet\n(4) - Illegal TFTP operation\n(5) - Unknown TID ");
 			String simNum = readSimInput.next(); // Scans the next token of the input as an int.
 
 			if (simNum.equals("1")){
@@ -502,13 +540,13 @@ public class SimpleEchoErrorSimulator {
 				System.out.println("Choose one of the following:\n(1) Invalid TFTP opcode\n"
 						+ "(2) Invalid Mode on RRQ/WRQ\n(3) Invalid Filename");
 				String invalidType = getInvalidTFTPType.nextLine();
-				
+
 				if(invalidType.equals("1")) {
 					invalidTFTPOpcode = true;
 					Scanner readPacketType = new Scanner(System.in);
 					System.out.println("What type of packet would you like to change opcode on? (WRQ/RRQ/DATA/ACK/ERROR)");
 					packetType = readPacketType.nextLine();
-					
+
 					if(packetType.equals("WRQ") || packetType.equals("RRQ")) {
 						Scanner readOpcodeNum = new Scanner(System.in);
 						System.out.println("What is the first of the two bytes you would like to change the opcode to?");
@@ -524,7 +562,7 @@ public class SimpleEchoErrorSimulator {
 						}else{
 							packetNumByteArray[1] = 1;
 						}
-						
+
 					}else if(packetType.equals("DATA") || packetType.equals("ACK") || packetType.equals("ERROR")) {
 						Scanner readPacketNum = new Scanner(System.in);
 						System.out.println("What is the first of the two bytes of the block number? (1/2/3/etc... i.e. 0 of 01, 2 of 23)\n");
@@ -535,7 +573,7 @@ public class SimpleEchoErrorSimulator {
 						byte tempSecond = readPacketSecondNum.nextByte(); // Scans the next token of the input as an int.
 						packetNumByteArray[0] = tempFirst;
 						packetNumByteArray[1] = tempSecond;
-						
+
 						Scanner readOpcodeNum = new Scanner(System.in);
 						System.out.println("What is the first of the two bytes you would like to change the opcode to?");
 						byte first = readOpcodeNum.nextByte();
@@ -545,7 +583,7 @@ public class SimpleEchoErrorSimulator {
 						opCodeOrBlockChange[0] = first;
 						opCodeOrBlockChange[1] = second;
 					}
-					
+
 				}else if (invalidType.equals("2")) {
 					changeMode = true;
 					Scanner readPacketType = new Scanner(System.in);
@@ -554,7 +592,7 @@ public class SimpleEchoErrorSimulator {
 					Scanner readMode = new Scanner(System.in);
 					System.out.println("Please enter the new mode:");
 					newMode = readMode.nextLine();
-					
+
 				}else if(invalidType.equals("3")) {
 					changeFileName = true;
 					Scanner readPacketType = new Scanner(System.in);
@@ -563,13 +601,13 @@ public class SimpleEchoErrorSimulator {
 					Scanner readFilename = new Scanner(System.in);
 					System.out.println("Please enter the new fileName:");
 					fileName = readFilename.nextLine();
-				
+
 				}else if(invalidType.equals("4")) {
 					invalidBlockNum = true;
 					Scanner readPacketType = new Scanner(System.in);
 					System.out.println("What type of packet would you like to change block number on? (DATA/ACK)");
 					packetType = readPacketType.nextLine();
-					
+
 					Scanner readPacketNum = new Scanner(System.in);
 					System.out.println("What is the first of the two bytes of the block number? (1/2/3/etc... i.e. 0 of 01, 2 of 23)\n");
 					byte tempFirst = readPacketNum.nextByte(); // Scans the next token of the input as an int.
@@ -579,7 +617,7 @@ public class SimpleEchoErrorSimulator {
 					byte tempSecond = readPacketSecondNum.nextByte(); // Scans the next token of the input as an int.
 					packetNumByteArray[0] = tempFirst;
 					packetNumByteArray[1] = tempSecond;
-					
+
 					Scanner readNewBlockNum = new Scanner(System.in);
 					System.out.println("What is the first of the two bytes you would like to change the opcode to?");
 					byte first = readNewBlockNum.nextByte();
@@ -589,12 +627,27 @@ public class SimpleEchoErrorSimulator {
 					opCodeOrBlockChange[0] = first;
 					opCodeOrBlockChange[1] = second;	
 				}
-				
+
+			} else if (simNum.equals("5")) {
+				unknownTID = true;
+				Scanner readPacketType = new Scanner(System.in);
+				System.out.println("What type of packet would you like to have the unknown TID on? (DATA/ACK)");
+				packetType = readPacketType.nextLine();
+
+				Scanner readPacketNum = new Scanner(System.in);
+				System.out.println("What is the first of the two bytes of the block number? (1/2/3/etc... i.e. 0 of 01, 2 of 23)\n");
+				byte tempFirst = readPacketNum.nextByte(); // Scans the next token of the input as an int.
+				//Wait for packet number
+				Scanner readPacketSecondNum = new Scanner(System.in);
+				System.out.println("What is the second of the two bytes of the block number? (1/2/3/etc... i.e. 1 of 01, 3 of 23)\n");
+				byte tempSecond = readPacketSecondNum.nextByte(); // Scans the next token of the input as an int.
+				packetNumByteArray[0] = tempFirst;
+				packetNumByteArray[1] = tempSecond;
 			}
 
 		}
 	}
-	
+
 	public byte[] changeFileName(byte arr[], String filename) {
 		ByteArrayOutputStream temp = new ByteArrayOutputStream();
 		temp.write(arr[0]);
@@ -621,7 +674,7 @@ public class SimpleEchoErrorSimulator {
 		ByteArrayOutputStream temp = new ByteArrayOutputStream();
 		temp.write(arr[0]);
 		temp.write(arr[1]);
-		
+
 		for(int i=2; i<arr.length;i++) {
 			if(arr[i] != 0) {
 				temp.write(arr[i]);

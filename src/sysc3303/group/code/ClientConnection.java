@@ -19,11 +19,10 @@ import java.util.Arrays;
 
 public class ClientConnection implements Runnable {
 	byte[] data;
-	DatagramPacket originalReceivePacket;
-	DatagramPacket errorPacket;
+	DatagramPacket errorPacket,receivePacket,sendPacket ;
 	DatagramSocket sendReceiveSocket;
-	DatagramPacket receivePacket;
-	DatagramPacket sendPacket;
+	InetAddress clientAddr;
+	int clientPort;
 	int packetSize = 516;
 	byte zero = 0;
 	byte fileExistErrCode = 6;
@@ -41,7 +40,8 @@ public class ClientConnection implements Runnable {
 
 	public ClientConnection(byte[] fileData, DatagramPacket packet,DatagramSocket socket){
 		data = fileData;
-		originalReceivePacket = packet;
+		clientAddr = packet.getAddress();
+		clientPort = packet.getPort();
 		try {
 			sendReceiveSocket = new DatagramSocket();
 		} catch (SocketException e) {
@@ -81,7 +81,7 @@ public class ClientConnection implements Runnable {
 
 		//Create datagram for sending back error request
 		sendPacket = new DatagramPacket(temp, temp.length,
-				originalReceivePacket.getAddress(), originalReceivePacket.getPort());
+				clientAddr, clientPort);
 
 		//Check if we have read permissions
 		String currDir = System.getProperty("user.dir");
@@ -98,7 +98,7 @@ public class ClientConnection implements Runnable {
 			byte ackToSend[];
 			System.out.println("Server: ERROR request created.");
 			ackToSend = createErrorRequest(zero,ERROR,zero,accessViolationErrCode,errMsg,zero);
-			errorPacket = new DatagramPacket(ackToSend, ackToSend.length, originalReceivePacket.getAddress(), originalReceivePacket.getPort());
+			errorPacket = new DatagramPacket(ackToSend, ackToSend.length, clientAddr, clientPort);
 
 			//Sending ERROR request
 			try {
@@ -134,7 +134,7 @@ public class ClientConnection implements Runnable {
 				byte errToSend[];
 				System.out.println("Server: ERROR request created.");
 				errToSend = createErrorRequest(zero,ERROR,zero,fileNotFoundErrCode,errMsg,zero);
-				errorPacket = new DatagramPacket(errToSend, errToSend.length, originalReceivePacket.getAddress(), originalReceivePacket.getPort());
+				errorPacket = new DatagramPacket(errToSend, errToSend.length, clientAddr, clientPort);
 
 				//Sending ERROR request
 				try {
@@ -183,7 +183,7 @@ public class ClientConnection implements Runnable {
 				message = new String(msg); 
 				System.out.println("Server: sending a packet containing:\n" + "Byte Form: " + msg + "\n" + "String Form: " + message + "\n");
 
-				sendPacket = new DatagramPacket(msg, msg.length, originalReceivePacket.getAddress(), originalReceivePacket.getPort());
+				sendPacket = new DatagramPacket(msg, msg.length, clientAddr, clientPort);
 
 
 
@@ -209,7 +209,7 @@ public class ClientConnection implements Runnable {
 					// Once block of data has been sent, wait for ACK from client before sending another block
 					try {
 						System.out.println("WAITING FOR ACK");
-						sendReceiveSocket.setSoTimeout(30000);
+						sendReceiveSocket.setSoTimeout(50000);
 						sendReceiveSocket.receive(receivePacket);
 						System.out.println("ACK Received!");
 						ackReceived = checkAckData(receivePacket, blockNumber);
@@ -267,7 +267,7 @@ public class ClientConnection implements Runnable {
 		byte msg[];
 		msg = createAckRequest(zero,ACK,zero,zero);
 		sendPacket = new DatagramPacket(msg, msg.length,
-				originalReceivePacket.getAddress(), originalReceivePacket.getPort());
+				clientAddr, clientPort);
 
 		String currDir = System.getProperty("user.dir");
 
@@ -290,7 +290,7 @@ public class ClientConnection implements Runnable {
 			byte ackToSend[];
 			System.out.println("Server: ERROR request created.");
 			ackToSend = createErrorRequest(zero,ERROR,zero,accessViolationErrCode,errMsg,zero);
-			errorPacket = new DatagramPacket(ackToSend, ackToSend.length, originalReceivePacket.getAddress(), originalReceivePacket.getPort());
+			errorPacket = new DatagramPacket(ackToSend, ackToSend.length, clientAddr, clientPort);
 
 			//Sending ERROR request
 			try {
@@ -310,7 +310,7 @@ public class ClientConnection implements Runnable {
 			byte errToSend[];
 			System.out.println("Server: ERROR request created.");
 			errToSend = createErrorRequest(zero,ERROR,zero,fileExistErrCode,errMsg,zero);
-			errorPacket = new DatagramPacket(errToSend, errToSend.length, originalReceivePacket.getAddress(), originalReceivePacket.getPort());
+			errorPacket = new DatagramPacket(errToSend, errToSend.length, clientAddr, clientPort);
 
 			//Sending ERROR request
 			try {
@@ -563,21 +563,37 @@ public class ClientConnection implements Runnable {
 	public boolean checkAckData(DatagramPacket packet, byte[] blkNum)
 	{
 		InetAddress packetAddr = packet.getAddress();
-		InetAddress clientAddr = originalReceivePacket.getAddress(); 
+	//	InetAddress clientAddr = originalReceivePacket.getAddress(); 
 
 		//check for valid 04xx / 03xx format
 		if ((packet.getData()[0] == zero) && ((packet.getData()[1] == ACK) || (packet.getData()[1] == DATA))) { //valid 04xx Ack
 			//check if it's for the right block of Data
 			if ((packet.getData()[2] == blkNum[0]) && (packet.getData()[3] == blkNum[1])) 
 			{ //valid block# for the ACK/DATA block that was just sent
-				if (packetAddr.equals(clientAddr) && packet.getPort() == originalReceivePacket.getPort())
+				if (packetAddr.equals(clientAddr) && packet.getPort() == clientPort)
 				{ //valid TID
 					System.out.println("checkAckData = true.");
 					return true;
 				}else {
-					System.out.println("CheckAckData = false. \n Wrong TID, Packet discarded.");
-					System.out.println("packet address = " + packet.getAddress() + ", origPacket = " + originalReceivePacket.getAddress() );
-					System.out.println("packet port = " + packet.getPort() + ", origPacket = " + originalReceivePacket.getPort() );
+					System.out.println("CheckAckData = false. \n Wrong TID, Packet discarded and error sent.");
+					System.out.println("packet address = " + packet.getAddress() + ", origPacket = " + clientAddr );
+					System.out.println("packet port = " + packet.getPort() + ", origPacket = " + clientPort );
+					String errStr = "ERROR: Invalid TID.";
+					System.out.println(errStr);
+					byte[] errMsg = errStr.getBytes();
+					byte ackToSend[];
+					System.out.println("Server: ERROR request created.");
+					ackToSend = createErrorRequest(zero,ERROR,zero,ERROR,errMsg,zero);
+					errorPacket = new DatagramPacket(ackToSend, ackToSend.length, packet.getAddress(), packet.getPort());
+
+					//Sending ERROR request
+					try {
+						sendReceiveSocket.send(errorPacket);
+						System.out.println("Server: ERROR request sent.");
+					} catch (IOException e) {
+						e.printStackTrace();
+						System.exit(1);
+					}
 					return false; //wrong TID so discard/false
 				}
 

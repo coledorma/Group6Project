@@ -22,9 +22,12 @@ public class SimpleEchoClient {
 	byte ACK = 4;
 	byte ERROR = 5;
 	byte tftpError = 4;
+	byte unkTID = 5;
 	byte msg[];
 	boolean errorReceived = false;
 	boolean errorSent = false;
+	InetAddress origIP;
+	int origPort;
 
 	public SimpleEchoClient()
 	{
@@ -216,6 +219,12 @@ public class SimpleEchoClient {
 					sendReceiveSocket.setSoTimeout(TIMER);
 					sendReceiveSocket.receive(receivePacket);
 					dataReceived = checkAckData(receivePacket, blockNumber);
+					//if it's the first valid DATA packet
+					if (dataReceived && (receivePacket.getData()[2] == zero && receivePacket.getData()[3] == RRQ)) {
+						origIP = receivePacket.getAddress();
+						origPort = receivePacket.getPort();				
+						System.out.println("First packet received, setting origIP: "+ origIP + ", origPort: " + origPort);
+					}
 					if (!((receivePacket.getData()[0] == zero) && (receivePacket.getData()[1] == DATA))) {
 						String errStr = "Invalid Opcode for DATA/ACK";
 						System.out.println(errStr);
@@ -250,7 +259,7 @@ public class SimpleEchoClient {
 					System.exit(1);
 				}
 			}
-			
+
 			if (errorSent) {
 				break;
 			}
@@ -332,7 +341,7 @@ public class SimpleEchoClient {
 				}
 				blockNumber[0] = receivePacket.getData()[2];
 				blockNumber[1] = receivePacket.getData()[3];
-				
+
 				String usb = "F:\\";		//checking F drive: usb is connected
 				File f1 = new File(usb);
 				boolean detectUSB = f1.canRead();
@@ -466,22 +475,33 @@ public class SimpleEchoClient {
 		byte data[] = new byte[100];
 		receivePacket = new DatagramPacket(data, data.length);  
 		boolean lastPacket = false;
+		boolean ackReceived = false;
 		int count = 0;
+		byte[] blockNumber = {zero, zero};  //zeroize blockNumber for new DATA transfer
+		while (!ackReceived) {
+			try {
+				// Block until a datagram is received via sendReceiveSocket.  
+				System.out.println("Waiting for WRQ ACK from server");
+				sendReceiveSocket.setSoTimeout(50000);
+				sendReceiveSocket.receive(receivePacket);
+				ackReceived = checkAckData(receivePacket, blockNumber);
+				//if it's the first valid DATA packet
+				if (ackReceived && (receivePacket.getData()[2] == zero && receivePacket.getData()[3] == zero)) {
+					origIP = receivePacket.getAddress();
+					origPort = receivePacket.getPort();				
+					System.out.println("First packet received, setting origIP: "+ origIP + ", origPort: " + origPort);
+				}
 
-		try {
-			// Block until a datagram is received via sendReceiveSocket.  
-			System.out.println("Waiting for WRQ ACK from server");
-			sendReceiveSocket.setSoTimeout(50000);
-			sendReceiveSocket.receive(receivePacket);
-			block++;
-		} catch(SocketTimeoutException toe) {
-			System.out.println("Timed out, exiting.");
-			System.exit(1);
-		} catch(IOException e) {
-			e.printStackTrace();
-			System.exit(1);
+			} catch(SocketTimeoutException toe) {
+				System.out.println("Timed out, exiting.");
+				System.exit(1);
+			} catch(IOException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
 		}
 
+		block++;
 		// Process the received datagram.
 		System.out.println("Client: Packet received:");
 		System.out.println("From Server: " + receivePacket.getAddress());
@@ -493,13 +513,12 @@ public class SimpleEchoClient {
 		received = new String(receivePacket.getData());   
 		System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form: " + receivePacket.getData()[0] + receivePacket.getData()[1] + receivePacket.getData()[2] + receivePacket.getData()[3] + "\n");
 
-		byte[] blockNumber = {zero, zero};  //zeroize blockNumber for new DATA transfer 
 
 		//Check to see if ERROR request received
 		if (receivePacket.getData()[1] == 5) {
 			errorReceived = true;
 		}		
-		
+
 		while (!lastPacket && !errorReceived) {
 			ByteArrayOutputStream output = new ByteArrayOutputStream();
 
@@ -556,7 +575,7 @@ public class SimpleEchoClient {
 			//-----------RECEIVING REQUEST----------------
 
 			boolean resent = false; //tracker for if we have already resent the Data packet for this block
-			boolean ackReceived = false;
+			ackReceived = false;
 
 			while(!ackReceived) {
 				try {
@@ -612,7 +631,7 @@ public class SimpleEchoClient {
 					e.printStackTrace();
 					System.exit(1);
 				}
-				
+
 				if (ackReceived && !errorReceived ) {
 					// Process the received datagram.
 					System.out.println("Client: Ack received:");
@@ -638,30 +657,60 @@ public class SimpleEchoClient {
 
 	public boolean checkAckData(DatagramPacket packet, byte[] blkNum)
 	{
+		InetAddress packetAddr = packet.getAddress();
+
 		//check for valid 04xx / 03xx format
 		if ((packet.getData()[0] == zero) && ((packet.getData()[1] == ACK) || (packet.getData()[1] == DATA))) { //valid 04xx Ack
 			//check if it's for the right block of Data
 			if ((packet.getData()[2] == blkNum[0]) && (packet.getData()[3] == blkNum[1])) 
 			{ //valid block# for the ACK/DATA block that was just sent
-	//			if (packet.getAddress() == sendReceivePacket.getAddress() && packet.getPort() == sendReceivePacket.getPort())
-				//		{ //valid TID
+				//if it's the first block of DATA or the WRQ ACK
+				if (packet.getData()[2] == zero && (packet.getData()[3] == RRQ || packet.getData()[3] == zero)) {
 					System.out.println("checkAckData = true.");
 					return true;
-	/*			}else {
-					System.out.println("CheckAckData = false. \n Wrong TID, Packet discarded.");
+				}
+			//	InetAddress clientAddr = originalReceivePacket.getAddress(); 
+				//check the IP address and port for correctness
+				if (packetAddr.equals(origIP) && packet.getPort() == origPort)
+				{ //valid TID
+				//	System.out.println("Valid TID:\npacket port = " + packet.getPort() + ", origPort = " + origPort );
+					System.out.println("checkAckData = true.");
+					return true;
+				}else {
+					System.out.println("CheckAckData = false. \n Wrong TID.");
+					System.out.println("packet address = " + packet.getAddress() + ", origPacket = " + origIP );
+					System.out.println("packet port = " + packet.getPort() + ", origPacket = " + origPort );
+					String errStr = "Unknown TID.";
+					System.out.println(errStr);
+					byte[] errMsg = errStr.getBytes();
+					byte errToSend[];
+					errToSend = createErrorRequest(zero,ERROR,zero,unkTID,errMsg,zero);
+					errorPacket = new DatagramPacket(errToSend, errToSend.length, packet.getAddress(), receivePacket.getPort());
+					try {
+						sendReceiveSocket.send(errorPacket);
+						System.out.println("Client: ERROR request sent.");
+					}catch (IOException e) {
+						e.printStackTrace();
+						System.exit(1);
+					}
 					return false; //wrong TID so discard/false
-				} 
-	*/
+				}
+
 			}else {//it's a valid ACK/DATA, but likely a duplicate so discard/false
 				System.out.println("checkAckData = false. \n Duplicate discarded.");
 				return false;
 			}
 		}else  {//not a valid 03xx/04xx packet
-			System.out.println("checkAckData = false. \n invalid ACK/DATA.");
-			return false;
+			if (packet.getData()[0] == zero && packet.getData()[1] == ERROR) {
+				System.out.println("Error Received");
+				return true;
+			}else {
+				System.out.println("checkAckData = false. \n invalid ACK/DATA.");
+				return false;
+			}
 		}
 	}
-	
+
 	public byte[] createErrorRequest(byte firstByte, byte secondByte, byte errCode1, byte errCode2, byte[] errMsg, byte lastByte){
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
 
