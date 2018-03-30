@@ -18,6 +18,8 @@ public class SimpleEchoErrorSimulator {
 	Boolean duplicateSim = false, delaySim = false, lostSim = false;
 	Boolean invalidTFTPOpcode = false, changeMode = false, changeFileName = false, invalidBlockNum = false, invalidErrCode = false; 
 	Boolean runSim = false, unknownTID = false;
+	Boolean specifyServer = false;
+	String userEnteredAddress;
 	byte zero = 0;
 	byte RRQ = 1;
 	byte WRQ = 2;
@@ -33,23 +35,24 @@ public class SimpleEchoErrorSimulator {
 	public SimpleEchoErrorSimulator()
 	{
 		ccPort = 0;
-		try {
-			// Construct a datagram socket and bind it to any available 
-			// port on the local host machine. This socket will be used to
-			// send UDP Datagram packets.
-			sendReceiveSocket = new DatagramSocket();
-
-			// Construct a datagram socket and bind it to port 2323 
-			// on the local host machine. This socket will be used to
-			// receive UDP Datagram packets.
-			receiveSocket = new DatagramSocket(2323);
-
-			// to test socket timeout (2 seconds)
-			//receiveSocket.setSoTimeout(2000);
-		} catch (SocketException se) {
-			se.printStackTrace();
-			System.exit(1);
-		} 
+			try {
+				// Construct a datagram socket and bind it to any available 
+				// port on the local host machine. This socket will be used to
+				// send UDP Datagram packets.
+				sendReceiveSocket = new DatagramSocket();
+	
+				// Construct a datagram socket and bind it to port 2323 
+				// on the local host machine. This socket will be used to
+				// receive UDP Datagram packets.
+				receiveSocket = new DatagramSocket(2323);
+	
+				// to test socket timeout (2 seconds)
+				//receiveSocket.setSoTimeout(2000);
+			} catch (SocketException se) {
+				se.printStackTrace();
+				System.exit(1);
+			} 
+		//}
 	}
 
 	public void receiveAndEcho()
@@ -93,7 +96,9 @@ public class SimpleEchoErrorSimulator {
 		System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String Form: " + receivePacket.getData()[0] + receivePacket.getData()[1] + receivePacket.getData()[2] + receivePacket.getData()[3] + "\n");
 
 		byte[] receivedByteArray = {receivePacket.getData()[0],receivePacket.getData()[1],receivePacket.getData()[2],receivePacket.getData()[3]};
-
+		
+		
+		
 		//Check to see if the received packet is the same as the inputed simulation packet
 		Boolean isSimPacket = false;
 		if(runSim) {
@@ -177,14 +182,29 @@ public class SimpleEchoErrorSimulator {
 			//isSimPacket = false;
 		} 
 
+		//if ClientConnection not yet created, send directly to Server, specifying port number 6969
 		if (ccPort == 0) {
+			if(specifyServer) { //if the user has entered a specific address for the Server, set sendPacket to this IP address
+				InetSocketAddress address = new InetSocketAddress(userEnteredAddress, 6969);
+				sendPacket = new DatagramPacket(data, data.length, address);
+				System.out.println("sendPacket is being sent to user entered address: " + sendPacket.getAddress());
+			}else { //otherwise set sendPacket to use local IP address
 			sendPacket = new DatagramPacket(data, data.length,
 					receivePacket.getAddress(), 6969);
-
+			System.out.println("sendPacket is being sent to local host address: " + sendPacket.getAddress());
+			}
 		} else {
+			
+		//otherwise, Client Connection has been created and ccPort has been set, so send there instead	
+			if(specifyServer) { //if the user has entered a specific address for the Server, set sendPacket to this IP address
+				InetSocketAddress address = new InetSocketAddress(userEnteredAddress, ccPort);
+				sendPacket = new DatagramPacket(data, data.length, address);
+				System.out.println("sendPacket is being sent to user entered address: " + sendPacket.getAddress());
+			}else { //otherwise set sendPacket to use local IP address
 			sendPacket = new DatagramPacket(data, receivePacket.getLength(),
 					receivePacket.getAddress(), ccPort);
-
+			System.out.println("sendPacket is being sent to local host address: " + sendPacket.getAddress());
+			}
 		}
 
 
@@ -244,13 +264,31 @@ public class SimpleEchoErrorSimulator {
 				System.out.println("This packet equals the simulation entered packet.");
 
 				//create datagram with packet information, length, address, and port number
+				//if ClientConnection not yet created, send directly to Server, specifying port number 6969
 				if (ccPort == 0) {
-					sendPacket = new DatagramPacket(data, receivePacket.getLength(),
+					if(specifyServer) { //if the user has entered a specific address for the Server, set sendPacket to this IP address
+						InetSocketAddress address = new InetSocketAddress(userEnteredAddress, 6969);
+						sendPacket = new DatagramPacket(data, data.length, address);
+						System.out.println("sendPacket is being sent to user entered address: " + sendPacket.getAddress());
+					}else { //otherwise set sendPacket to use local IP address
+					sendPacket = new DatagramPacket(data, data.length,
 							receivePacket.getAddress(), 6969);
+					System.out.println("sendPacket is being sent to local host address: " + sendPacket.getAddress());
+					}
 				} else {
+					
+				//otherwise, Client Connection has been created and ccPort has been set, so send there instead	
+					if(specifyServer) { //if the user has entered a specific address for the Server, set sendPacket to this IP address
+						InetSocketAddress address = new InetSocketAddress(userEnteredAddress, ccPort);
+						sendPacket = new DatagramPacket(data, data.length, address);
+						System.out.println("sendPacket is being sent to user entered address: " + sendPacket.getAddress());
+					}else { //otherwise set sendPacket to use local IP address
 					sendPacket = new DatagramPacket(data, receivePacket.getLength(),
 							receivePacket.getAddress(), ccPort);
+					System.out.println("sendPacket is being sent to local host address: " + sendPacket.getAddress());
+					}
 				}
+
 
 				// Duplicate packet implementation
 				System.out.println("Creating new Duplicate Packet Connection Thread...");
@@ -434,10 +472,30 @@ public class SimpleEchoErrorSimulator {
 		}
 
 	}
+	
+	public void changeServerIP() {
+		Scanner readUserInput = new Scanner(System.in);
+		System.out.println("Would you like to specify an IP address for the server? (Y/N)\n");
+		String requestAnswer = readUserInput.next(); // Scans the next token of the input as an int.
+		//readUserInput.close();
+
+		//Wait for answer from user 
+		if (requestAnswer.equals("Y") || requestAnswer.equals("y")){
+			specifyServer = true;
+			Scanner readAddress = new Scanner(System.in);
+			System.out.println("What is the IP address of the server you want to connect to? (Format: 'XXX.XXX.X.X' where X is an integer)");
+			userEnteredAddress = readAddress.nextLine();
+		}else {
+			return;
+		}
+	}
+	
+	
+
 
 	public void testMenu(){
 		Scanner readUserInput = new Scanner(System.in);
-		System.out.println("Would you like to test out a timeout/retransmission situation? (Y/N)\n");
+		System.out.println("\nWould you like to test out a timeout/retransmission situation? (Y/N)\n");
 		String requestAnswer = readUserInput.next(); // Scans the next token of the input as an int.
 		//readUserInput.close();
 
@@ -446,7 +504,7 @@ public class SimpleEchoErrorSimulator {
 			//Wait for sim number
 			runSim = true;
 			Scanner readSimInput = new Scanner(System.in);
-			System.out.println("Which of the following would you like to simulate?\n(1) - Lose A Packet\n(2) - Delay A Packet\n(3) - Duplicate A Packet\n(4) - Illegal TFTP operation\n(5) - Unknown TID ");
+			System.out.println("Which of the following would you like to simulate?\n(1) - Lose A Packet\n(2) - Delay A Packet\n(3) - Duplicate A Packet\n(4) - Illegal TFTP operation\n(5) - Unknown TID \n ");
 			String simNum = readSimInput.next(); // Scans the next token of the input as an int.
 
 			if (simNum.equals("1")){
@@ -460,7 +518,7 @@ public class SimpleEchoErrorSimulator {
 				if (packetType.equals("DATA") || packetType.equals("ACK")){
 					//Wait for packet number
 					Scanner readPacketNum = new Scanner(System.in);
-					System.out.println("What is the first of the two bytes of the block number? (1/2/3/etc... i.e. 1 of 01, 3 of 23)\n");
+					System.out.println("What is the first of the two bytes of the block number? (1/2/3/etc... i.e. 0 of 01, 2 of 23)\n");
 					byte tempFirst = readPacketNum.nextByte(); // Scans the next token of the input as an int.
 
 					//Wait for packet number
@@ -483,7 +541,7 @@ public class SimpleEchoErrorSimulator {
 				if (packetType.equals("DATA") || packetType.equals("ACK")){
 					//Wait for packet number
 					Scanner readPacketNum = new Scanner(System.in);
-					System.out.println("What is the first of the two bytes of the block number? (1/2/3/etc... i.e. 1 of 01, 3 of 23)\n");
+					System.out.println("What is the first of the two bytes of the block number? (1/2/3/etc... i.e. 0 of 01, 2 of 23)\n");
 					byte tempFirst = readPacketNum.nextByte(); // Scans the next token of the input as an int.
 
 					//Wait for packet number
@@ -644,7 +702,6 @@ public class SimpleEchoErrorSimulator {
 				packetNumByteArray[0] = tempFirst;
 				packetNumByteArray[1] = tempSecond;
 			}
-
 		}
 	}
 
@@ -736,6 +793,7 @@ public class SimpleEchoErrorSimulator {
 	public static void main( String args[] )
 	{
 		SimpleEchoErrorSimulator c = new SimpleEchoErrorSimulator();
+		c.changeServerIP();
 		c.testMenu();
 		while(true){
 			c.receiveAndEcho(); 
