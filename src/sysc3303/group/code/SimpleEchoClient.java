@@ -589,8 +589,17 @@ public class SimpleEchoClient {
 					ackReceived = checkAckData(receivePacket, blockNumber);
 					if (receivePacket.getData()[1] == 5) {
 						System.out.println("ERROR Packet Received");
-						System.out.println(receivePacket.getData().toString());
+						//System.out.println(receivePacket.getData().toString());
 						errorReceived = true;
+						// Process the received datagram.
+						System.out.println("From Server: " + receivePacket.getAddress());
+						System.out.println("Server port: " + receivePacket.getPort());
+						len = receivePacket.getLength();
+						System.out.println("Length: " + len);
+						System.out.print("Containing: \n");
+						// Form a String from the byte array.
+						received = new String(receivePacket.getData());   
+						System.out.println("--> Byte Form: " + receivePacket.getData() + "\n" + "--> String form:" + received + "\n");
 						break;
 					}
 					if (!((receivePacket.getData()[0] == zero) && (receivePacket.getData()[1] == ACK))) {

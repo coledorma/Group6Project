@@ -483,7 +483,7 @@ public class SimpleEchoErrorSimulator {
 		if (requestAnswer.equals("Y") || requestAnswer.equals("y")){
 			specifyServer = true;
 			Scanner readAddress = new Scanner(System.in);
-			System.out.println("What is the IP address of the server you want to connect to? (Format: 'XXX.XXX.X.X' where X is an integer)");
+			System.out.println("What is the IP address of the server you want to connect to? (Format: 'XXX.XXX.XX.XX' where X is an integer)");
 			userEnteredAddress = readAddress.nextLine();
 		}else {
 			return;
