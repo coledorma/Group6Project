@@ -216,8 +216,8 @@ public class ClientConnection implements Runnable {
 						System.out.println("ACK Received!");
 						ackReceived = checkAckData(receivePacket, blockNumber);
 						if (!((receivePacket.getData()[0] == zero) && (receivePacket.getData()[1] == ACK)) && //if it's not an ACK
-								(!((blockNumber[0] == zero) && (blockNumber[1] == RRQ)) && //if it's not on blk 01 && it's not a resent RRQ
-										((receivePacket.getData()[0] == zero) && (receivePacket.getData()[1] == RRQ)))) 
+								(!((blockNumber[0] == zero && blockNumber[1] == RRQ) && //if it's not on blk 01 && it's not a resent RRQ
+										(receivePacket.getData()[0] == zero && receivePacket.getData()[1] == RRQ)))) 
 						{    
 							String errStr = "Invalid Opcode for ACK";
 							System.out.println(errStr);
