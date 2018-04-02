@@ -15,6 +15,7 @@ public class SimpleEchoClient {
 	DatagramPacket sendPacket, receivePacket, errorPacket;
 	DatagramSocket sendReceiveSocket;
 	int packetSize = 516;
+	int TIMER;
 	byte zero = 0;
 	byte RRQ = 1;
 	byte WRQ = 2;
@@ -210,11 +211,11 @@ public class SimpleEchoClient {
 			long start = 0;
 			final long end;
 			blockNumber = incrementBN(blockNumber); 
-			int TIMER = 45000;
+			TIMER = 50000;
 			while(!dataReceived) {
 				try {
 					// Block until a datagram is received via sendReceiveSocket.
-					System.out.println("Waiting for Data:");
+					System.out.println("Waiting for Data from server for "+TIMER+"ms...");
 					start = System.currentTimeMillis();
 					sendReceiveSocket.setSoTimeout(TIMER);
 					sendReceiveSocket.receive(receivePacket);
@@ -225,7 +226,7 @@ public class SimpleEchoClient {
 						origPort = receivePacket.getPort();				
 						System.out.println("First packet received, setting origIP: "+ origIP + ", origPort: " + origPort);
 					}
-					if (!((receivePacket.getData()[0] == zero) && (receivePacket.getData()[1] == DATA))) {
+					if (!((receivePacket.getData()[0] == zero) && (receivePacket.getData()[1] == DATA)) && !dataReceived) {
 						String errStr = "Invalid Opcode for DATA/ACK";
 						System.out.println(errStr);
 						byte[] errMsg = errStr.getBytes();
@@ -478,11 +479,12 @@ public class SimpleEchoClient {
 		boolean ackReceived = false;
 		int count = 0;
 		byte[] blockNumber = {zero, zero};  //zeroize blockNumber for new DATA transfer
+		TIMER = 50000;
 		while (!ackReceived) {
 			try {
 				// Block until a datagram is received via sendReceiveSocket.  
-				System.out.println("Waiting for WRQ ACK from server");
-				sendReceiveSocket.setSoTimeout(50000);
+				System.out.println("Waiting for WRQ ACK from server for " + TIMER +"ms...");
+				sendReceiveSocket.setSoTimeout(TIMER);
 				sendReceiveSocket.receive(receivePacket);
 				ackReceived = checkAckData(receivePacket, blockNumber);
 				//if it's the first valid DATA packet
@@ -517,6 +519,7 @@ public class SimpleEchoClient {
 		//Check to see if ERROR request received
 		if (receivePacket.getData()[1] == 5) {
 			errorReceived = true;
+			System.out.println(new String(receivePacket.getData()));
 		}		
 
 		while (!lastPacket && !errorReceived) {
@@ -576,12 +579,12 @@ public class SimpleEchoClient {
 
 			boolean resent = false; //tracker for if we have already resent the Data packet for this block
 			ackReceived = false;
-
+			int TIMER = 30000;
 			while(!ackReceived) {
 				try {
 					// Block until a datagram is received via sendReceiveSocket.
-					System.out.println("Waiting for ACK.");
-					sendReceiveSocket.setSoTimeout(30000);
+					System.out.println("Waiting for ACK from server for " + TIMER + "ms...");
+					sendReceiveSocket.setSoTimeout(TIMER);
 					sendReceiveSocket.receive(receivePacket);
 					ackReceived = checkAckData(receivePacket, blockNumber);
 					if (receivePacket.getData()[1] == 5) {
@@ -627,6 +630,7 @@ public class SimpleEchoClient {
 					}
 					//uncomment if we want to limit amount of timeouts allowed 
 					resent = true;
+					TIMER = 60000;
 				} catch(IOException e) {
 					e.printStackTrace();
 					System.exit(1);
@@ -664,8 +668,8 @@ public class SimpleEchoClient {
 			//check if it's for the right block of Data
 			if ((packet.getData()[2] == blkNum[0]) && (packet.getData()[3] == blkNum[1])) 
 			{ //valid block# for the ACK/DATA block that was just sent
-				//if it's the first block of DATA or the WRQ ACK
-				if (packet.getData()[2] == zero && (packet.getData()[3] == RRQ || packet.getData()[3] == zero)) {
+				//if it's the WRQ ACK or the first block of DATA(RRQ) 
+				if (packet.getData()[2] == zero &&  (packet.getData()[3] == zero || (packet.getData()[1] == DATA && packet.getData()[3] == RRQ))) {
 					System.out.println("checkAckData = true.");
 					return true;
 				}
@@ -693,6 +697,7 @@ public class SimpleEchoClient {
 						e.printStackTrace();
 						System.exit(1);
 					}
+					TIMER = 60000;
 					return false; //wrong TID so discard/false
 				}
 

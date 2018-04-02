@@ -24,6 +24,7 @@ public class ClientConnection implements Runnable {
 	InetAddress clientAddr;
 	int clientPort;
 	int packetSize = 516;
+	int TIMER = 45000;
 	byte zero = 0;
 	byte fileExistErrCode = 6;
 	byte fileNotFoundErrCode = 1;
@@ -204,16 +205,20 @@ public class ClientConnection implements Runnable {
 				// Once first block of data as been sent, wait for ACK from client before sending another block
 				boolean resent = false;
 				boolean ackReceived = false;
-
+				TIMER = 45000;
 				while (!ackReceived){	
+					
 					// Once block of data has been sent, wait for ACK from client before sending another block
 					try {
-						System.out.println("WAITING FOR ACK");
-						sendReceiveSocket.setSoTimeout(50000);
+						System.out.println("WAITING FOR ACK for " + TIMER + "ms...");
+						sendReceiveSocket.setSoTimeout(TIMER);
 						sendReceiveSocket.receive(receivePacket);
 						System.out.println("ACK Received!");
 						ackReceived = checkAckData(receivePacket, blockNumber);
-						if (!((receivePacket.getData()[0] == zero) && (receivePacket.getData()[1] == ACK))) {
+						if (!((receivePacket.getData()[0] == zero) && (receivePacket.getData()[1] == ACK)) && //if it's not an ACK
+								(!((blockNumber[0] == zero) && (blockNumber[1] == RRQ)) && //if it's not on blk 01 && it's not a resent RRQ
+										((receivePacket.getData()[0] == zero) && (receivePacket.getData()[1] == RRQ)))) 
+						{    
 							String errStr = "Invalid Opcode for ACK";
 							System.out.println(errStr);
 							byte[] errMsg = errStr.getBytes();
@@ -356,11 +361,11 @@ public class ClientConnection implements Runnable {
 				blockNumber = incrementBN(blockNumber); 
 				System.out.println("Server: Waiting for DATA.\n");
 				boolean dataReceived = false;
-
+				TIMER = 45000;
 				while(!dataReceived) {
 					try {        
-						sendReceiveSocket.setSoTimeout(45000);
-						System.out.println("Waiting for file"); 
+						sendReceiveSocket.setSoTimeout(TIMER);
+						System.out.println("Waiting for file, for "+ TIMER + "ms..."); 
 						sendReceiveSocket.receive(receivePacket);
 						System.out.println("Packet Received");
 						dataReceived = checkAckData(receivePacket, blockNumber);
@@ -387,7 +392,6 @@ public class ClientConnection implements Runnable {
 						try {
 							System.out.println("Resending Packet!");
 							sendReceiveSocket.send(sendPacket);
-							System.out.println(sendPacket.getData().toString());
 						} catch (IOException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -594,6 +598,7 @@ public class ClientConnection implements Runnable {
 						e.printStackTrace();
 						System.exit(1);
 					}
+					TIMER = 60000;
 					return false; //wrong TID so discard/false
 				}
 
