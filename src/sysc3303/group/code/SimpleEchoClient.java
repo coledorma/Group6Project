@@ -229,19 +229,8 @@ public class SimpleEchoClient {
 					if (!((receivePacket.getData()[0] == zero) && (receivePacket.getData()[1] == DATA)) && !dataReceived) {
 						String errStr = "Invalid Opcode for DATA/ACK";
 						System.out.println(errStr);
-						byte[] errMsg = errStr.getBytes();
-						byte errToSend[];
-						errToSend = createErrorRequest(zero,ERROR,zero,tftpError,errMsg,zero);
-						errorPacket = new DatagramPacket(errToSend, errToSend.length, receivePacket.getAddress(), receivePacket.getPort());
-						try {
-							sendReceiveSocket.send(errorPacket);
-							errorSent = true;
-							System.out.println("Client: ERROR request sent.");
-							dataReceived = true;
-						} catch (IOException e) {
-							e.printStackTrace();
-							System.exit(1);
-						}
+						errorSent = true;
+						dataReceived = true;
 					}
 				}catch (SocketTimeoutException ste) {
 					//This is where u should recent the datagram
