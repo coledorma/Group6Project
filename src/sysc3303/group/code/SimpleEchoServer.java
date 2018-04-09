@@ -22,7 +22,7 @@ public class SimpleEchoServer {
 	public SimpleEchoServer()
 	{
 		try {
-			receiveSocket = new DatagramSocket(6969);
+			receiveSocket = new DatagramSocket(69);
 			sendSocket = new DatagramSocket();
 		} catch (SocketException se) {
 			se.printStackTrace();
@@ -61,19 +61,20 @@ public class SimpleEchoServer {
 				// Request is valid so create a new client connection thread and pass original request to it as data
 				thread = new Thread(new ClientConnection(data, receivePacket, receiveSocket));
 				thread.start();
-				thread.join();
+			//	thread.join();
 			}
 		} catch (IOException e) {
 			System.out.print("IO Exception: likely:");
 			System.out.println("Receive Socket Timed Out.\n" + e);
 			e.printStackTrace();
 			System.exit(1);
-		} catch (InterruptedException e) {
+		} 
+		/*catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 
-		Scanner readInput = new Scanner(System.in);
+	/*	Scanner readInput = new Scanner(System.in);
 		System.out.println("Would you like to shutdown the server (Y/N)? ");
 		String shutdownAnswer = readInput.next(); // Scans the next token of the input as an int.
 		readInput.close();
@@ -82,7 +83,7 @@ public class SimpleEchoServer {
 		if (shutdownAnswer.equals("Y") || shutdownAnswer.equals("y")){
 			System.out.println("Shutting the server down.");
 			System.exit(1);
-		} 
+		} */
 
 	}
 
