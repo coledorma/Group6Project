@@ -182,7 +182,7 @@ public class SimpleEchoErrorSimulator {
 			//isSimPacket = false;
 		} 
 
-		//if ClientConnection not yet created, send directly to Server, specifying port number 6969
+		//if ClientConnection not yet created, send directly to Server, specifying port number 69
 		if (ccPort == 0) {
 			if(specifyServer) { //if the user has entered a specific address for the Server, set sendPacket to this IP address
 				InetSocketAddress address = new InetSocketAddress(userEnteredAddress, 69);
@@ -264,15 +264,15 @@ public class SimpleEchoErrorSimulator {
 				System.out.println("This packet equals the simulation entered packet.");
 
 				//create datagram with packet information, length, address, and port number
-				//if ClientConnection not yet created, send directly to Server, specifying port number 6969
+				//if ClientConnection not yet created, send directly to Server, specifying port number 69
 				if (ccPort == 0) {
 					if(specifyServer) { //if the user has entered a specific address for the Server, set sendPacket to this IP address
-						InetSocketAddress address = new InetSocketAddress(userEnteredAddress, 6969);
+						InetSocketAddress address = new InetSocketAddress(userEnteredAddress, 69);
 						sendPacket = new DatagramPacket(data, data.length, address);
 						System.out.println("sendPacket is being sent to user entered address: " + sendPacket.getAddress());
 					}else { //otherwise set sendPacket to use local IP address
 					sendPacket = new DatagramPacket(data, data.length,
-							receivePacket.getAddress(), 6969);
+							receivePacket.getAddress(), 69);
 					System.out.println("sendPacket is being sent to local host address: " + sendPacket.getAddress());
 					}
 				} else {
